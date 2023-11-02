@@ -1,0 +1,25 @@
+unit uUtils;
+interface
+
+  uses sysutils;
+
+  type TFechaUtils = class
+    public
+     class function EstaFechaDentroDelRango(fecha_desde:string; fecha_hasta: string): Boolean;
+  end;
+implementation
+
+
+    {********************************************************************
+      Función que verifica que la fecha actual este dentro del rango
+      @param fecha_desde:string | fecha inicial de comparación
+      @param fecha_hasta: string | fecha final de comparación
+      @return boolean
+    ********************************************************************}
+    class function TFechaUtils.EstaFechaDentroDelRango(fecha_desde:string; fecha_hasta: string): Boolean;
+    begin
+      Result := (Now > StrToDateTime(fecha_desde)) and (Now < StrToDateTime(fecha_hasta));
+    end;
+
+
+end.

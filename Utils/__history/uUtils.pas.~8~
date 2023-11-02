@@ -1,0 +1,69 @@
+unit uUtils;
+interface
+
+  uses sysutils;
+
+  type TFechaUtils = class
+    public
+    class function EstaFechaDentroDelRango(fecha_desde:string; fecha_hasta: string): Boolean;
+    class function LeftPad(const S: string; Ch: Char; Len: Integer): string;
+    class function RightPad(const S: string; Ch: Char; Len: Integer): string;
+    class function CadLongitudFija(const Cadena: string; Longitud: Integer; PosicionIzquierda: Boolean; ValorRelleno: string): string;
+
+  end;
+implementation
+
+
+class function TFechaUtils.LeftPad(S: string; Ch: Char; Len: Integer): string;
+var
+  RestLen: Integer;
+begin
+  Result  := S;
+  RestLen := Len - Length(s);
+  if RestLen < 1 then Exit;
+  Result := S + StringOfChar(Ch, RestLen);
+end;
+
+class function TFechaUtils.RightPad(S: string; Ch: Char; Len: Integer): string;
+var
+  RestLen: Integer;
+begin
+  Result  := S;
+  RestLen := Len - Length(s);
+  if RestLen < 1 then Exit;
+  Result := StringOfChar(Ch, RestLen) + S;
+end;
+
+class function TFechaUtils.cadLongitudFija (cadena : string; longitud : Integer;
+    posicionIzquierda : boolean; valorRelleno : string) : string;
+var
+  i: integer;
+begin
+  if length(cadena) > longitud then
+    cadena := copy(cadena, 1, longitud)
+  else
+  begin
+    for i := 1 to longitud - Length(cadena) do
+      if posicionIzquierda then
+        cadena := valorRelleno + cadena
+      else
+        cadena := cadena + valorRelleno;
+  end;
+  Result := cadena;
+end;
+
+
+
+    {
+      Descripción: Esta función verifica si una fecha está dentro de un rango específico.
+      @param fecha_desde: La fecha de inicio del rango en formato string.
+      @param fecha_hasta: La fecha de fin del rango en formato string.
+      @return True si la fecha actual está dentro del rango, False en caso contrario.
+    }
+    class function TFechaUtils.EstaFechaDentroDelRango(fecha_desde:string; fecha_hasta: string): Boolean;
+    begin
+      Result := (Now > StrToDateTime(fecha_desde)) and (Now < StrToDateTime(fecha_hasta));
+    end;
+
+
+end.

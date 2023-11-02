@@ -1,0 +1,15 @@
+unit uUtils;
+interface
+
+  uses sysutils;
+
+  type TUtils = class
+    public
+
+  end;
+implementation
+    class function TRangoFechasUtils.EstaDentroDelRango(fecha_desde:string, fecha_hasta: string): Boolean;
+begin
+  Result := (Now > StrToDateTime(fecha_desde)) and (Now < StrToDateTime(fecha_hasta));
+end;
+end.

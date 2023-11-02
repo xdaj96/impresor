@@ -1,0 +1,507 @@
+unit uFiscalEpson;
+
+interface
+  uses windows,dialogs,udTicket,sysutils,math;
+  type
+  TFiscalEpson = class
+     type
+  TConsultarVersionDll = function ( descripcion : PChar; descripcion_largo_maximo: LongInt; var mayor : LongInt; var menor : LongInt) : LongInt; StdCall;
+
+  TConfigurarVelocidad = function ( velocidad: LongInt ) : LongInt; StdCall;
+
+  TConfigurarPuerto = function ( velocidad: String ) : LongInt; StdCall;
+
+  TConectar = function () : LongInt; StdCall;
+
+  TImprimirCierreX = function () : LongInt; StdCall;
+
+  TImprimirCierreZ = function () : LongInt; StdCall;
+
+  TDesconectar = function () : LongInt; StdCall;
+
+  tEstablecerEncabezado= function( numero_encabezado: integer;  descripcion: PansiChar ): LongInt; StdCall;
+
+  tAbrirComprobante= function( id_tipo_documento: integer)  : LongInt; StdCall;
+
+  tCerrarComprobante= function()  : LongInt; StdCall;
+
+  tEnviarComando=function ( commando:PansiChar  )  : LongInt; StdCall;
+
+  tConsultarEncabezado=function( numero_encabezado: integer;  respuesta: string ;respuesta_largo_maximo:integer): LongInt; StdCall;
+
+  tEstablecerCola=function( numero_cola: integer;  descripcion: PansiChar ): LongInt; StdCall;
+
+  tCargarTextoExtra=function(descripcion :PansiChar ): LongInt; StdCall;
+
+  TImprimirItem=function(id_modificador : integer; descripcion :Pansichar; cantidad :Pansichar; precio : Pansichar; id_tasa_iva : Integer; ii_id: integer; ii_valor: Pansichar; id_codigo : integer; codigo: Pansichar; codigo_unidad_matrix: Pansichar; código_unidad_medida: integer ):LongInt; StdCall;
+
+  TCargarPago=function(id_modificador: Integer;  codigo_forma_pago:Integer; cantidad_cuotas:Integer; monto : Pansichar;descripción_cupones:Pansichar;descripcion:Pansichar;descripcion_extra1:Pansichar;descripcion_extra2:Pansichar): LongInt; StdCall;
+
+  TConsultarNumeroComprobanteUltimo=function(tipo_de_comprobante: pansichar; respuesta: pansichar; respuesta_largo_maximo: Longint):Longint; StdCall;
+
+  TObtenerRespuesta=function(buffer_salida:pansichar; largo_buffer_salida: integer;largo_final_buffer_salida: integer): LongInt; StdCall;
+
+  TConsultarNumeroComprobanteActual=function( respuesta : pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
+
+  TConsultarFechaHora=function(respuesta: pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
+
+  TCargarAjuste=function ( id_modificador: integer ; descripcion: pansichar; monto : pansichar ;id_tasa_iva: integer; codigo_interno:pansichar ):Longint; Stdcall;
+
+  TObtenerRespuestaExtendida=function ( numero_campo: longint;buffer_salida: pansichar;largo_buffer_salida : longint; largo_final_buffer_salida: longint ): LongInt; Stdcall;
+
+  TImprimirTextoLibre=function(descripcion : Pansichar ):Longint; Stdcall;
+
+
+  tObtenerEstadoImpresora=function():Longint; Stdcall;
+
+
+
+  public
+  dll  : THandle;
+  error : LongInt;
+  str : Array[0..200] of Char;
+  mayor : LongInt;
+  menor : LongInt;
+  mychar: char;
+
+  ConfigurarVelocidad: TConfigurarVelocidad;
+  ConfigurarPuerto: TConfigurarPuerto;
+  Conectar: TConectar;
+  ImprimirCierreX: TImprimirCierreX;
+  ImprimirCierreZ: TImprimirCierreZ;
+  Desconectar: TDesconectar;
+  ConsultarVersionDll: TConsultarVersionDll;
+  establecerencabezado: testablecerencabezado;
+  ConsultarEncabezado: tConsultarEncabezado;
+  abrircomprobante: tabrircomprobante;
+  CerrarComprobante: tCerrarComprobante;
+  EnviarComando: tEnviarComando;
+  EstablecerCola: tEstablecerCola;
+  CargarTextoExtra: tCargarTextoExtra;
+  ImprimirItem: tImprimirItem;
+  CargarPago: TCargarPago;
+  ConsultarNumeroComprobanteUltimo: TConsultarNumeroComprobanteUltimo;
+  ObtenerRespuesta: TObtenerRespuesta;
+  ConsultarNumeroComprobanteActual: TConsultarNumeroComprobanteActual;
+  ConsultarFechaHora : TConsultarFechaHora;
+  ObtenerRespuestaExtendida: tObtenerRespuestaExtendida;
+  Cargarajuste: Tcargarajuste;
+  ImprimirTextoLibre: TImprimirTextoLibre;
+  ObtenerEstadoImpresora: tObtenerEstadoImpresora;
+
+  constructor Create;
+  destructor destroy;
+  procedure configurarImpresor(ticket:TTicket);
+  procedure borrarEncabezadoYCola;
+  procedure imprimirCodigoDeBarras(barcode:string);
+   procedure imprimirCodigoDeBarrasCola(posCola:Integer;barcode:string);
+  procedure GenerarEtiquetasBarcodes(codigo:string);
+  end;
+implementation
+
+  constructor TFiscalEpson.Create;
+  begin
+
+     // copiadigital;
+  dll := 0;
+
+  // instanciar dll - recordar que se require "uses Windows"
+
+  dll := LoadLibrary('C:\dll\EpsonFiscalInterface.dll');
+
+  // check error
+  if dll = 0 then
+  begin
+    ShowMessage('Error al instanciar DLL');
+    Exit;
+  end;
+
+  {iniciar variables}
+  error:=0;
+  mayor := 0;
+  menor := 0;
+  mychar:=' ';
+
+
+  // obtener las referencias a funciones:  "ConsultarVersionDll"
+  @ConsultarVersionDll := GetProcAddress(dll, 'ConsultarVersionDll');
+  if not Assigned(ConsultarVersionDll) then
+  begin
+    ShowMessage('Error al asignar funcion: ConsultarVersionDll');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "ConfigurarVelocidad"
+  @ConfigurarVelocidad := GetProcAddress(dll, 'ConfigurarVelocidad');
+  if not Assigned(ConfigurarVelocidad) then
+  begin
+    ShowMessage('Error al asignar funcion: ConfigurarVelocidad');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "ConfigurarPuerto"
+  @ConfigurarPuerto := GetProcAddress(dll, 'ConfigurarPuerto');
+  if not Assigned(ConfigurarPuerto) then
+  begin
+    ShowMessage('Error al asignar funcion: ConfigurarPuerto');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "Conectar"
+  @Conectar := GetProcAddress(dll, 'Conectar');
+  if not Assigned(Conectar) then
+  begin
+    ShowMessage('Error al asignar funcion: Conectar');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "ImprimirCierreX"
+  @ImprimirCierreX := GetProcAddress(dll, 'ImprimirCierreX');
+  if not Assigned(ImprimirCierreX) then
+  begin
+    ShowMessage('Error al asignar funcion: ImprimirCierreX');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "ImprimirCierreZ"
+  @ImprimirCierreZ := GetProcAddress(dll, 'ImprimirCierreZ');
+  if not Assigned(ImprimirCierreZ) then
+  begin
+    ShowMessage('Error al asignar funcion: ImprimirCierreZ');
+    Exit;
+  end;
+
+  @abrircomprobante := GetProcAddress(dll, 'AbrirComprobante');
+  if not Assigned(abrircomprobante) then
+  begin
+    ShowMessage('Error al asignar funcion: AbrirComprobante');
+    Exit;
+  end;
+  @CerrarComprobante := GetProcAddress(dll, 'CerrarComprobante');
+  if not Assigned(abrircomprobante) then
+  begin
+    ShowMessage('Error al asignar funcion: CerrarComprobante');
+    Exit;
+  end;
+  @establecerencabezado := GetProcAddress(dll, 'EstablecerEncabezado');
+  if not Assigned(abrircomprobante) then
+  begin
+    ShowMessage('Error al asignar funcion: CerrarComprobante');
+    Exit;
+  end;
+  @ConsultarEncabezado := GetProcAddress(dll, 'EstablecerEncabezado');
+  if not Assigned(abrircomprobante) then
+  begin
+    ShowMessage('Error al asignar funcion: CerrarComprobante');
+    Exit;
+  end;
+  @EnviarComando := GetProcAddress(dll, 'EnviarComando');
+  if not Assigned(EnviarComando) then
+  begin
+    ShowMessage('Error al asignar funcion: EnviarComando');
+    Exit;
+  end;
+
+  // obtener las referencias a funciones:  "Desconectar"
+  @Desconectar := GetProcAddress(dll, 'Desconectar');
+  if not Assigned(Desconectar) then
+  begin
+    ShowMessage('Error al asignar funcion: Desconectar');
+    Exit;
+  end;
+  @EstablecerCola := GetProcAddress(dll, 'EstablecerCola');
+  if not Assigned(EstablecerCola) then
+  begin
+    ShowMessage('Error al asignar funcion: EstablecerCola');
+    Exit;
+  end;
+  @CargarTextoExtra := GetProcAddress(dll, 'CargarTextoExtra');
+  if not Assigned(CargarTextoExtra) then
+  begin
+    ShowMessage('Error al asignar funcion: CargarTextoExtra');
+    Exit;
+  end;
+  @ImprimirItem := GetProcAddress(dll, 'ImprimirItem');
+  if not Assigned(ImprimirItem) then
+  begin
+    ShowMessage('Error al asignar funcion: ImprimirItem');
+    Exit;
+  end;
+  @CargarPago := GetProcAddress(dll, 'CargarPago');
+  if not Assigned(CargarPago) then
+  begin
+    ShowMessage('Error al asignar funcion: CargarPago');
+    Exit;
+  end;
+
+  @ConsultarNumeroComprobanteActual :=
+    GetProcAddress(dll, 'ConsultarNumeroComprobanteActual');
+  if not Assigned(ConsultarNumeroComprobanteActual) then
+  begin
+    ShowMessage('Error al asignar funcion: ConsultarNumeroComprobanteActual');
+    Exit;
+  end;
+  @ConsultarFechaHora := GetProcAddress(dll, 'Consultarfechahora');
+  if not Assigned(ConsultarNumeroComprobanteActual) then
+  begin
+    ShowMessage('Error al asignar funcion: Consultarfechahora');
+    Exit;
+  end;
+
+  @ObtenerRespuestaExtendida := GetProcAddress(dll,
+    'ObtenerRespuestaExtendida');
+  if not Assigned(ObtenerRespuestaExtendida) then
+  begin
+    ShowMessage('Error al asignar funcion: ObtenerRespuestaExtendida');
+    Exit;
+  end;
+  @Cargarajuste := GetProcAddress(dll, 'CargarAjuste');
+  if not Assigned(Cargarajuste) then
+  begin
+    ShowMessage('Error al asignar funcion: CargarAjuste');
+    Exit;
+  end;
+
+  @ImprimirTextoLibre := GetProcAddress(dll, 'ImprimirTextoLibre');
+  if not Assigned(ImprimirTextoLibre) then
+  begin
+    ShowMessage('Error al asignar funcion: ImprimirTextoLibre');
+    Exit;
+  end;
+
+  @ConsultarNumeroComprobanteUltimo :=
+    GetProcAddress(dll, 'ConsultarNumeroComprobanteUltimo');
+  if not Assigned(ConsultarNumeroComprobanteUltimo) then
+  begin
+    ShowMessage('Error al asignar funcion: ConsultarNumerocomprobanteultimo');
+    Exit;
+  end;
+  end;
+destructor TFiscalEpson.destroy;
+begin
+  error := Desconectar();
+  FreeLibrary(dll);
+
+end;
+
+
+
+ procedure TFiscalEpson.configurarImpresor(ticket:TTicket);
+ begin
+   error:=0;
+   mayor := 0;
+   menor := 0;
+   mychar:=' ';
+   error := ConsultarVersionDll( str, 100, mayor, menor );
+   error := ConfigurarVelocidad( 9600 );
+   error := ConfigurarPuerto( ticket.puerto_com );
+   error := CerrarComprobante();
+   error := Conectar();
+
+ end;
+
+ procedure TFiscalEpson.borrarEncabezadoYCola;
+ var
+  comando:Array[0..200] of AnsiChar;
+ begin
+          comando:= '';
+          error :=establecerencabezado (1, @comando[0]);
+          error :=establecerencabezado (2, @comando[0]);
+          error :=establecerencabezado (3, @comando[0]);
+          error :=establecerencabezado (4, @comando[0]);
+          error :=establecerencabezado (5, @comando[0]);
+          error :=establecerencabezado (6, @comando[0]);
+          error :=establecerencabezado (7, @comando[0]);
+          error :=establecerencabezado (8, @comando[0]);
+          error :=establecerencabezado (9, @comando[0]);
+          error :=establecerencabezado (10, @comando[0]);
+          {Borra la cola de impresion}
+          error :=EstablecerCola (1, @comando[0]);
+          error :=EstablecerCola (2, @comando[0]);
+          error :=EstablecerCola (3, @comando[0]);
+          error :=EstablecerCola (4, @comando[0]);
+          error :=EstablecerCola (5, @comando[0]);
+          error :=EstablecerCola (6, @comando[0]);
+          error :=EstablecerCola (7, @comando[0]);
+          error :=EstablecerCola (8, @comando[0]);
+          error :=EstablecerCola (9, @comando[0]);
+          error :=EstablecerCola (10, @comando[0]);
+          error :=EstablecerCola (10, @comando[0]);
+          error :=EstablecerCola (11, @comando[0]);
+          error :=EstablecerCola (12, @comando[0]);
+          error :=EstablecerCola (13, @comando[0]);
+          error :=EstablecerCola (14, @comando[0]);
+
+ end;
+
+
+  procedure TFiscalEpson.GenerarEtiquetasBarcodes(codigo:string);
+   const
+    DOC_TYPE_DNF = 21;
+var
+  barcodeHRI_POS_NONE, barcodeHRI_POS_TOP, barcodeHRI_POS_BOTTOM, barcodeHRI_POS_BOTH: string;
+  barcodeHRI_LETTER_FONT_A, barcodeHRI_LETTER_FONT_B: string;
+  barcodeESC, barcodeID, barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER: string;
+  bar1, bar2, bar3, bar4: string;
+  error: integer;
+
+  function ConstruirCodigoBarras(tipo, altura, ancho, posicionHRI, letraHRI, datos: string): string;
+  begin
+    Result := barcodeESC + barcodeID + tipo + altura + ancho + posicionHRI + letraHRI + datos;
+  end;
+
+begin
+  // Definir constantes para códigos de barras
+  barcodeHRI_POS_NONE := 'x''00''';
+  barcodeHRI_POS_TOP := 'x''01''';
+  barcodeHRI_POS_BOTTOM := 'x''02''';
+  barcodeHRI_POS_BOTH := 'x''03''';
+
+  barcodeHRI_LETTER_FONT_A := 'x''00''';
+  barcodeHRI_LETTER_FONT_B := 'x''01''';
+
+  barcodeESC := 'x''1B''';
+  barcodeID := 'x''80''';
+
+  // Generar Código de Barras #2
+  barcodeTYPE := 'x''00''';
+  barcodeHEIGHT := 'x''00''';
+  barcodeWIDTH := 'x''00''';
+  barcodeHRI_POS := barcodeHRI_POS_BOTTOM;
+  barcodeHRI_LETTER := barcodeHRI_LETTER_FONT_A;
+  bar2 := ConstruirCodigoBarras(barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER, '12345678901');
+
+  // Generar Código de Barras #1
+  barcodeTYPE := 'x''02''';
+  barcodeHEIGHT := 'x''A2''';
+  barcodeWIDTH := 'x''03''';
+  barcodeHRI_POS := barcodeHRI_POS_BOTTOM;
+  barcodeHRI_LETTER := barcodeHRI_LETTER_FONT_A;
+  // Nota: Solo soporta 12 o 13 caracteres estrictamente
+  bar1 := ConstruirCodigoBarras(barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER, '123456789012');
+
+  // Generar Código de Barras #3
+  barcodeTYPE := 'x''00''';
+  barcodeHEIGHT := 'x''00''';
+  barcodeWIDTH := 'x''00''';
+  barcodeHRI_POS := barcodeHRI_POS_BOTTOM;
+  barcodeHRI_LETTER := barcodeHRI_LETTER_FONT_A;
+  bar3 := ConstruirCodigoBarras(barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER, '12345678901');
+
+  // Generar Código de Barras #4 (forma antigua de enviar valores hexadecimales)
+  bar4 := 'x''1b800230030000''200123456789';
+
+  // Ejemplo de uso de EnviarComando
+  error := EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
+  error := EnviarComando(PAnsiChar(AnsiString('0E02|0000|Forma nueva:')));
+  error := EnviarComando(PAnsiChar(AnsiString('0E02|0000|' + bar1)));
+  error := EnviarComando(PAnsiChar(AnsiString('0E02|0000|Forma antigua')));
+  error := EnviarComando(PAnsiChar(AnsiString('0E02|0000|' + bar4)));
+  error := EnviarComando(PAnsiChar(AnsiString('0E06|0001|1|' + bar1 + '|2|' + bar2 + '|3|' + bar3 + '|3')));
+
+  // Ejemplo de uso de funciones relacionadas con comprobantes
+
+
+  error := AbrirComprobante(DOC_TYPE_DNF);
+  {error := CargarTextoExtra(bar1);
+  error := CargarTextoExtra(bar4); }
+  error := EstablecerCola(5, PAnsiChar(AnsiString(bar2)));
+  error := EstablecerCola(8, PAnsiChar(AnsiString(bar4)));
+  error := CerrarComprobante;
+end;
+
+
+
+ procedure TFiscalEpson.imprimirCodigoDeBarrasCola(posCola:Integer;barcode:string);
+ const
+  barcodeHRI_POS_NONE   = #$00;
+  barcodeHRI_POS_TOP    = #$01;
+  barcodeHRI_POS_BOTTOM = #$02;
+  barcodeHRI_POS_BOTH   = #$03;
+
+  barcodeHRI_LETTER_FONT_A = #$00;
+  barcodeHRI_LETTER_FONT_B = #$01;
+
+  barcodeESC = #$1B;
+  barcodeID = #$80;
+
+ var
+    barcodeTYPE: Byte;
+  barcodeHEIGHT: Byte;
+  barcodeWIDTH: Byte;
+  barcodeHRI_POS: Byte;
+  barcodeHRI_LETTER: Byte;
+  bar2: AnsiString;
+
+
+begin
+  barcodeTYPE := Byte(#$00);
+  barcodeHEIGHT := Byte(#$00);
+  barcodeWIDTH := Byte(#$00);
+  barcodeHRI_POS := Byte(barcodeHRI_POS_BOTTOM);
+  barcodeHRI_LETTER := Byte(barcodeHRI_LETTER_FONT_A);
+
+  bar2 := AnsiChar(barcodeESC) + AnsiChar(barcodeID) + AnsiChar(barcodeTYPE) +
+          AnsiChar(barcodeHEIGHT) + AnsiChar(barcodeWIDTH) + AnsiChar(barcodeHRI_POS) +
+          AnsiChar(barcodeHRI_LETTER) + barcode;
+
+ error:= EstablecerCola(posCola,pansichar(bar2));
+
+
+
+end;
+
+
+
+
+
+
+
+ procedure TFiscalEpson.imprimirCodigoDeBarras(barcode:string);
+ var
+  barcodeHRI_POS_NONE, barcodeHRI_POS_TOP, barcodeHRI_POS_BOTTOM, barcodeHRI_POS_BOTH: string;
+  barcodeHRI_LETTER_FONT_A, barcodeHRI_LETTER_FONT_B: string;
+  barcodeESC, barcodeID, barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER: string;
+  bar1, bar2, bar3, bar4: string;
+  error: integer;
+
+  function ConstruirCodigoBarras(tipo, altura, ancho, posicionHRI, letraHRI, datos: string): string;
+  begin
+    Result := barcodeESC + barcodeID + tipo + altura + ancho + posicionHRI + letraHRI + datos;
+  end;
+
+begin
+  // Definir constantes para códigos de barras
+  barcodeHRI_POS_NONE := 'x''00''';
+  barcodeHRI_POS_TOP := 'x''01''';
+  barcodeHRI_POS_BOTTOM := 'x''02''';
+  barcodeHRI_POS_BOTH := 'x''03''';
+
+  barcodeHRI_LETTER_FONT_A := 'x''00''';
+  barcodeHRI_LETTER_FONT_B := 'x''01''';
+
+  barcodeESC := 'x''1B''';
+  barcodeID := 'x''80''';
+
+
+  // Generar Código de Barras #1
+  barcodeTYPE := 'x''02''';
+  barcodeHEIGHT := 'x''A2''';
+  barcodeWIDTH := 'x''03''';
+  barcodeHRI_POS := barcodeHRI_POS_BOTTOM;
+  barcodeHRI_LETTER := barcodeHRI_LETTER_FONT_A;
+  // Nota: Solo soporta 12 o 13 caracteres estrictamente
+  bar1 := ConstruirCodigoBarras(barcodeTYPE, barcodeHEIGHT, barcodeWIDTH, barcodeHRI_POS, barcodeHRI_LETTER, barcode);
+
+
+  // Ejemplo de uso de EnviarComando
+  error := EnviarComando(PAnsiChar(AnsiString('0E02|0000|' + bar1)));
+  //ShowMessage(IntToStr(error));
+
+  // Ejemplo de uso de funciones relacionadas con comprobantes
+
+end;
+
+
+
+end.

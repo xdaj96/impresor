@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2017/05/18 11:14:12.000.592,=C:\Users\maxi\Documents\Embarcadero\Studio\Projects\Unit2.pas</Transaction>
+    <Transaction>2017/05/18 11:14:33.000.448,C:\programas_datos\impresor2\Unit1.pas=C:\Users\maxi\Documents\Embarcadero\Studio\Projects\Unit2.pas</Transaction>
+    <Transaction>2017/05/18 11:14:33.000.448,C:\programas_datos\impresor2\Unit1.dfm=C:\Users\maxi\Documents\Embarcadero\Studio\Projects\Unit2.dfm</Transaction>
+    <Transaction>2017/05/18 11:16:12.000.975,C:\programas_datos\impresor2\Project2.dproj=C:\Users\maxi\Documents\Embarcadero\Studio\Projects\Project2.dproj</Transaction>
+    <Transaction>2017/05/18 12:31:28.000.843,=C:\programas_datos\APlus\UDTicket.pas</Transaction>
+    <Transaction>2017/05/18 12:43:46.000.893,C:\programas_datos\APlus\UDTicket.pas=</Transaction>
+    <Transaction>2017/05/18 12:43:55.000.175,=C:\programas_datos\impresor2\Unit2.pas</Transaction>
+    <Transaction>2017/05/18 12:44:50.000.758,C:\programas_datos\impresor2\Udticket.pas=C:\programas_datos\impresor2\Unit2.pas</Transaction>
+    <Transaction>2017/05/18 13:10:47.000.493,=C:\programas_datos\impresor2\UIMPRESION.pas</Transaction>
+    <Transaction>2017/05/18 13:12:14.000.832,C:\programas_datos\impresor2\Uimpresor.pas=C:\programas_datos\impresor2\Unit1.pas</Transaction>
+    <Transaction>2017/05/18 13:12:14.000.832,C:\programas_datos\impresor2\Uimpresor.dfm=C:\programas_datos\impresor2\Unit1.dfm</Transaction>
+    <Transaction>2017/05/18 13:14:26.000.799,=C:\programas_datos\impresor2\UdmFacturador.pas</Transaction>
+    <Transaction>2017/05/18 13:18:59.000.861,C:\programas_datos\impresor2\UIMPRESION.pas=</Transaction>
+    <Transaction>2018/07/06 12:18:53.000.354,C:\programas_datos\recuperado2\impresor2\impresor.dproj=C:\programas_datos\recuperado2\impresor2\Project2.dproj</Transaction>
+    <Transaction>2018/07/23 10:47:53.000.702,=C:\programas_datos\APlus_SRC\Uadicionales.pas</Transaction>
+    <Transaction>2018/07/23 10:48:12.000.467,C:\programas_datos\APlus_SRC\Uadicionales.pas=</Transaction>
+    <Transaction>2018/07/23 10:49:38.000.032,=C:\programas_datos\recuperado2\impresor2\Uadicionales.pas</Transaction>
+    <Transaction>2021/06/07 14:18:35.000.995,C:\programas_datos\recuperado2\impresor2\Uadicionales.pas=</Transaction>
+    <Transaction>2023/10/27 14:20:47.000.730,=C:\NET\desarrollo\impresor\Impresor\Libs\uFiscalEpson2.pas</Transaction>
+    <Transaction>2023/10/27 14:20:47.000.713,=C:\NET\desarrollo\impresor\Impresor\Libs\uFiscalEpson.pas</Transaction>
+    <Transaction>2023/10/27 14:20:57.000.519,=C:\NET\desarrollo\impresor\Impresor\Helpers\uRegistryHelper.pas</Transaction>
+    <Transaction>2023/10/27 14:21:04.000.971,=C:\NET\desarrollo\impresor\Impresor\Models\uBaseTicket.pas</Transaction>
+    <Transaction>2023/10/27 14:21:05.000.038,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketBEpson.pas</Transaction>
+    <Transaction>2023/10/27 14:21:05.000.056,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketTEpson.pas</Transaction>
+    <Transaction>2023/10/27 14:21:05.000.003,=C:\NET\desarrollo\impresor\Impresor\Models\UFormaDePago.pas</Transaction>
+    <Transaction>2023/10/27 14:21:05.000.020,=C:\NET\desarrollo\impresor\Impresor\Models\UFormaPago.pas</Transaction>
+    <Transaction>2023/10/27 14:21:18.000.647,=C:\NET\desarrollo\impresor\Impresor\Utils\uUtils.pas</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="Helpers"/>
+    <File Path="Helpers\uRegistryHelper.pas"/>
+    <File Path="Libs"/>
+    <File Path="Libs\uFiscalEpson.pas"/>
+    <File Path="Libs\uFiscalEpson2.pas"/>
+    <File Path="Models"/>
+    <File Path="Models\uBaseTicket.pas"/>
+    <File Path="Models\UFormaDePago.pas"/>
+    <File Path="Models\UFormaPago.pas"/>
+    <File Path="Models\uTicketBEpson.pas"/>
+    <File Path="Models\uTicketTEpson.pas"/>
+    <File Path="Utils"/>
+    <File Path="Utils\uUtils.pas"/>
+    <File Path="UdmFacturador.pas"/>
+    <File Path="UdmFacturador.dfm"/>
+    <File Path="Udticket.pas"/>
+    <File Path="Uimpresor.pas"/>
+    <File Path="Uimpresor.dfm"/>
+  </ProjectSortOrder>
+</BorlandProject>

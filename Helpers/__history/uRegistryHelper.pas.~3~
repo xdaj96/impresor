@@ -1,0 +1,66 @@
+unit uRegistryHelper;
+
+interface
+
+uses
+  Registry,Windows;
+
+type
+  TRegistryHelper = class
+  private
+    FRegistry: TRegistry;
+    RegKey:string;
+
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function LeerValor(const Clave, Nombre: string; ValorPredeterminado: Variant): Variant;
+    procedure EscribirValor(const Clave, Nombre: string; Valor: Variant);
+    procedure EliminarValor(const Clave, Nombre: string);
+  end;
+
+implementation
+
+constructor TRegistryHelper.Create;
+begin
+  FRegistry := TRegistry.Create;
+  RegKey :='Software\Autofarma\APlus\';
+end;
+
+destructor TRegistryHelper.Destroy;
+begin
+  FRegistry.Free;
+  inherited;
+end;
+
+function TRegistryHelper.LeerValor(const Clave, Nombre: string; ValorPredeterminado: Variant): Variant;
+begin
+    FRegistry.OpenKey(regKey,true);
+    Result := FRegistry.ReadString(Nombre);
+    FRegistry.CloseKey;
+  end
+  else
+    Result := ValorPredeterminado;
+end;
+
+procedure TRegistryHelper.EscribirValor(const Clave, Nombre: string; Valor: Variant);
+begin
+  FRegistry.RootKey := HKEY_CURRENT_USER;
+  if FRegistry.OpenKey(Clave, True) then
+  begin
+    FRegistry.WriteVariant(Nombre, Valor);
+    FRegistry.CloseKey;
+  end;
+end;
+
+procedure TRegistryHelper.EliminarValor(const Clave, Nombre: string);
+begin
+  FRegistry.RootKey := HKEY_CURRENT_USER;
+  if FRegistry.OpenKey(Clave, True) then
+  begin
+    FRegistry.DeleteValue(Nombre);
+    FRegistry.CloseKey;
+  end;
+end;
+
+end.
