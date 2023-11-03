@@ -11,10 +11,11 @@ interface
   ticket: TTicket;
   GFacturador: TDBGRID;
   formaDePago:TFormaDePago;
-  nro_comprobdigital:Integer;
-  public
 
+  public
+      nro_comprobdigital:Integer;
       imprimi: boolean;
+      nro_comprob:Integer;
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);

@@ -16,8 +16,13 @@ interface
       nro_comprobdigital:Integer;
       imprimi: boolean;
       nro_comprob:Integer;
+
+      function llevaValidacionConCodBarras(cod_os: string): boolean;
+
+
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
+
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
   end;
 implementation
@@ -271,10 +276,33 @@ begin
 
 
 
-
 end;
 
+function TBaseTicket.llevaValidacionConCodBarras(cod_os: string): boolean;
+var
+  cod_os_habilitadas: array of string;
+  i: Integer;
+  codBarrasHabilitado: Boolean;
+begin
+  // Inicializamos la variable codBarrasHabilitado en false
+  codBarrasHabilitado := False;
 
+  // Asignamos un valor inicial a cod_os_habilitadas (esto debería ser un array de strings válido)
+  cod_os_habilitadas := ['-', 'código2', 'código3'];
+
+  // Recorremos el array de códigos habilitados para verificar si cod_os está en la lista
+  for i := 0 to High(cod_os_habilitadas) do
+  begin
+    if cod_os_habilitadas[i] = cod_os then
+    begin
+      codBarrasHabilitado := True;
+      break; // Si encontramos el código, salimos del bucle
+    end;
+  end;
+
+  // Devolvemos el valor de codBarrasHabilitado
+  Result := codBarrasHabilitado;
+end;
 
 
 end.

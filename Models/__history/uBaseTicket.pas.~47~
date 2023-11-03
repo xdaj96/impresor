@@ -2,8 +2,8 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
-  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson;
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
+  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms;
 
  type
   TBaseTicket = class
@@ -11,17 +11,19 @@ interface
   ticket: TTicket;
   GFacturador: TDBGRID;
   formaDePago:TFormaDePago;
-  nro_comprobdigital:Integer;
-  fiscalEpson:TFiscalEpson;
-  error:LongInt;
+
   public
+      nro_comprobdigital:Integer;
+      imprimi: boolean;
+      nro_comprob:Integer;
+
+      function llevaValidacionConCodBarras(cod_os: string): boolean;
 
 
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
-      constructor Create(unTicket: TTicket;gridFacturador: TDBGRID;fiscal:TFiscalEpson);
-      procedure imprimirCodigoValidaOnline;
-      procedure imprimirDatosAfiliadoValidacion;
+
+      constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
   end;
 implementation
   //--------------------  PROMO -----------------------------------------------------------------------//
@@ -58,7 +60,7 @@ implementation
    //-----------------------------------------------------------------------------//
 //----------------------Direccion fiscal----------------------------------------//
 
-constructor TBaseTicket.Create(unTicket: TTicket;gridFacturador: TDBGRID;fiscal:TFiscalEpson);
+constructor TBaseTicket.Create(unTicket: TTicket;gridFacturador: TDBGRID);
 begin
   ticket:= unTicket;
   GFacturador:= gridFacturador;
@@ -67,10 +69,8 @@ begin
   formaDePago:= TFormaDePago.Create;
   formaDePago.cargarFormaPago(ticket);
 
-  fiscalEpson:= fiscal;
 
-  if assigned(fiscalEpson) then
-     ShowMessage('fiscal asignado');
+
 
 end;
 procedure TBaseTicket.copiadigital;
@@ -274,35 +274,11 @@ begin
 
     end;
 
-
+    function TBaseTicket.lleva
 
 
 end;
 
-procedure TBaseTicket.imprimirCodigoValidaOnline;
-begin
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Codigo de validación online:')));
-   fiscalEpson.imprimirCodigoDeBarras('123456789');
-end;
-
-procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
-begin
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Afiliado:'+ticket.afiliado_nombre)));
-      error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-    error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Teléfono:'+ticket.telefono)));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Firma:')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Aclaración:')));
-   fiscalEpson.imprimirCodigoDeBarras('123456789');
-end;
 
 
 

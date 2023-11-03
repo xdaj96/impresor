@@ -3,7 +3,7 @@ unit uBaseTicket;
 interface
   uses
    Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
-  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms;
+  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,math;
 
  type
   TBaseTicket = class
@@ -11,12 +11,18 @@ interface
   ticket: TTicket;
   GFacturador: TDBGRID;
   formaDePago:TFormaDePago;
-  nro_comprobdigital:Integer;
+
   public
+      nro_comprobdigital:Integer;
+      imprimi: boolean;
+      nro_comprob:Integer;
+
+      function llevaValidacionConCodBarras(cod_os: string): boolean;
 
 
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
+
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
   end;
 implementation
@@ -270,10 +276,27 @@ begin
 
 
 
-
 end;
 
+function TBaseTicket.llevaValidacionConCodBarras(cod_os: string): boolean;
+var
+cod_os_habilitadas:array of string;
+i:Integer;
+begin
 
+   cod_os_habilitadas:= [];
+
+   for i := 0 to  do
+   begin
+
+   end;
+
+
+  if Length(cod_os) = 13 then
+    Result := True
+  else
+    Result := False;
+end;
 
 
 end.

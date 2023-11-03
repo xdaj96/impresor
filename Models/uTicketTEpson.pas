@@ -57,8 +57,10 @@ interface
     procedure imprimirCorteDeTicket;
     procedure crearTicketVale;
     procedure imprimirDatosAfiliadoValidacion;
-    procedure imprimirCodigoValidaOnline;
+    procedure imprimirCodBarrasValidacionOnline;
     procedure imprimirFormaDePagoEnTicket;
+    procedure imprimirCodBarrasSeguimientoOValidacion;
+    procedure imprimirBarrasSeguimientoComprobante;
     public
       constructor Create(unTicket:TTicket;gridFacturador:TDBGrid);
       procedure ImprimirTicket(var imprimio: Boolean); override;
@@ -84,16 +86,15 @@ end;
 
 
 
-procedure TTicketTEpson.imprimirCodigoValidaOnline;
+procedure TTicketTEpson.imprimirCodBarrasValidacionOnline;
 begin
   if ticket.valnroreferencia = '' then
     exit;
 
-  if reg.LeerValor('talonvonline') <>'S' then
-    exit;
+  fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
+  fiscalEpson.imprimirCodigoDeBarras(ticket.valnroreferencia);
 
-  fiscalEpson.EscribirEnCola('Codigo validacion online:'+ticket.valnroreferencia);
-  fiscalEpson.SaltoLineaCola;
+
 end;
 
 procedure TTicketTEpson.imprimirDatosAfiliadoValidacion;
@@ -103,11 +104,12 @@ begin
   if (reg.LeerValor('conformidad_afiliado') <> 'S') or (ticket.codigo_OS = '') then
     exit;
 
-  FiscalEpson.EscribirEnCola('********** CONFORMIDAD DEL AFILIADO **********');
-  FiscalEpson.EscribirEnCola('FIRMA:........................................');
-  FiscalEpson.EscribirEnCola('ACLARACION:...................................');
-  FiscalEpson.EscribirEnCola('DOCUMENTO:....................................');
-  FiscalEpson.EscribirEnCola('TELEFONO:.....................................');
+  FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
+  FiscalEpson.escribirTextoLibre('FIRMA:........................................');
+  FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
+  FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
+  FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
+  FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
 
 end;
 
@@ -129,6 +131,8 @@ begin
   fiscalEpson.EscribirEnEncabezado('Mat. Med: ' + ticket.medico_nro_matricula);
   fiscalEpson.EscribirEnEncabezado('Receta: ' + ticket.numero_receta);
   fiscalEpson.EscribirEnEncabezado('Numero de ref: ' + ticket.valnroreferencia);
+
+
 
 
 
@@ -303,11 +307,6 @@ end;
 procedure TTicketTEpson.finalizarTicket;
 begin
 
-  {Aca se le agrega el codigo de validacion online}
-
-     imprimirCodigoValidaOnline;
-     imprimirDatosAfiliadoValidacion;
-
 
   {Fin de codigo validacion online}
   FiscalEpson.EscribirEnCola('Numero de ref:' + (ticket.valnroreferencia));
@@ -341,6 +340,51 @@ begin
  end;
 
 //----------------------------Finalizar Ticket-----------------------------//
+
+//--------------------------COD BARRAS SEGUIMIENTO ----------------------------------//
+
+procedure TTicketTEpson.imprimirBarrasSeguimientoComprobante;
+var
+  barra_seguimiento:string;
+  nro_suc_pv:string;
+  cant_caracteres:Integer;
+begin
+cant_caracteres:=13;
+ nro_suc_pv:= ticket.sucursal +ticket.fiscla_pv;
+ barra_seguimiento:= nro_suc_pv +(TUtils.rightpad(inttostr(nro_comprob), '0', cant_caracteres - length(nro_suc_pv)));
+ fiscalEpson.EscribirTextoLibre('Numero de seguimiento:');
+ fiscalEpson.EscribirTextoLibre(barra_seguimiento);
+
+ fiscalEpson.imprimirCodigoDeBarras(barra_seguimiento);
+
+end;
+
+
+procedure TTicketTEpson.imprimirCodBarrasSeguimientoOValidacion;
+begin
+
+  if  (ticket.codigo_OS <> '') and llevaValidacionConCodBarras(ticket.codigo_OS)  then
+  begin
+
+     imprimirCodBarrasValidacionOnline;
+     imprimirDatosAfiliadoValidacion;
+  end
+  else
+      begin
+
+        imprimirBarrasSeguimientoComprobante
+      end;
+
+
+end;
+
+
+
+//------------------------- COD BARRAS SEGUIMIENTO ----------------------------------//
+
+
+
+
 
 //--------------------------descuento general----------------------------------//
 
@@ -618,6 +662,10 @@ begin
 
       imprimirItemsTalonOS;
 
+      imprimirCodBarrasSeguimientoOValidacion;
+
+
+
       error := fiscalEpson.cerrarComprobante();
       z := 0;
       if ticket.talon = 'S' then
@@ -631,7 +679,7 @@ begin
 
           iniciarTicketNoFiscal;
           imprimirItemsTalonOS;
-
+           imprimirCodBarrasSeguimientoOValidacion;
           error := fiscalEpson.cerrarComprobante();
         end;
       END;

@@ -2,8 +2,8 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
-  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson;
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
+  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms;
 
  type
   TBaseTicket = class
@@ -11,17 +11,19 @@ interface
   ticket: TTicket;
   GFacturador: TDBGRID;
   formaDePago:TFormaDePago;
-  nro_comprobdigital:Integer;
 
-  error:LongInt;
   public
-       fiscalEpson:TFiscalEpson;
+      nro_comprobdigital:Integer;
+      imprimi: boolean;
+      nro_comprob:Integer;
+
+      function llevaValidacionConCodBarras(cod_os: string): boolean;
+
 
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
+
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
-      procedure imprimirCodigoValidaOnline;
-      procedure imprimirDatosAfiliadoValidacion;
   end;
 implementation
   //--------------------  PROMO -----------------------------------------------------------------------//
@@ -67,11 +69,8 @@ begin
   formaDePago:= TFormaDePago.Create;
   formaDePago.cargarFormaPago(ticket);
 
-   fiscalEpson:= TFiscalEpson.Create;
-   fiscalEpson.configurarImpresor(ticket);
 
-  if assigned(fiscalEpson) then
-     ShowMessage('fiscal asignado');
+
 
 end;
 procedure TBaseTicket.copiadigital;
@@ -277,34 +276,33 @@ begin
 
 
 
-
 end;
 
-procedure TBaseTicket.imprimirCodigoValidaOnline;
+function TBaseTicket.llevaValidacionConCodBarras(cod_os: string): boolean;
+var
+  cod_os_habilitadas: array of string;
+  i: Integer;
+  codBarrasHabilitado: Boolean;
 begin
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Codigo de validación online:')));
-   fiscalEpson.imprimirCodigoDeBarras('123456789');
+  // Inicializamos la variable codBarrasHabilitado en false
+  codBarrasHabilitado := False;
+
+  // Asignamos un valor inicial a cod_os_habilitadas (esto debería ser un array de strings válido)
+  cod_os_habilitadas := ['O01', 'código2', 'código3'];
+
+  // Recorremos el array de códigos habilitados para verificar si cod_os está en la lista
+  for i := 0 to High(cod_os_habilitadas) do
+  begin
+    if cod_os_habilitadas[i] = cod_os then
+    begin
+      codBarrasHabilitado := True;
+      break; // Si encontramos el código, salimos del bucle
+    end;
+  end;
+
+  // Devolvemos el valor de codBarrasHabilitado
+  Result := codBarrasHabilitado;
 end;
-
-procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
-begin
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-   error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Afiliado:'+ticket.afiliado_nombre)));
-      error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-    error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Teléfono:'+ticket.telefono)));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Firma:')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E01|0000')));
-       error := fiscalEpson.EnviarComando(PAnsiChar(AnsiString('0E02|0000|Aclaración:')));
-   fiscalEpson.imprimirCodigoDeBarras('123456789');
-end;
-
 
 
 end.

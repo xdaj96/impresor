@@ -95,11 +95,14 @@ interface
   procedure configurarImpresor(ticket:TTicket);
   procedure borrarEncabezadoYCola;
   procedure imprimirCodigoDeBarras(barcode:string);
-   procedure imprimirCodigoDeBarrasCola(posCola:Integer;barcode:string);
+   procedure imprimirCodigoDeBarrasCola(barcode:string);
   procedure GenerarEtiquetasBarcodes(codigo:string);
   procedure EscribirEnEncabezado(texto:string);
    procedure SaltoLineaEncabezado;
   procedure EscribirEnCola(texto:string);
+    procedure escribirTextoLibre(texto:string);
+
+
   procedure SaltoLineaCola;
 
   end;
@@ -420,7 +423,7 @@ end;
 
 
 
- procedure TFiscalEpson.imprimirCodigoDeBarrasCola(posCola:Integer;barcode:string);
+ procedure TFiscalEpson.imprimirCodigoDeBarrasCola(barcode:string);
  const
   barcodeHRI_POS_NONE   = #$00;
   barcodeHRI_POS_TOP    = #$01;
@@ -544,7 +547,15 @@ begin
   EscribirEnEncabezado('   ');
 end;
 
+procedure TFiscalEpson.escribirTextoLibre(texto: string);
+var
+comando:Array[0..200] of ansichar;
+begin
+  comando:= '';
+  texto := strpcopy(comando, texto);
+  error := ImprimirTextoLibre(comando);
 
+end;
 
 
 end.

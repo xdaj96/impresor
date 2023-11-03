@@ -88,7 +88,8 @@ interface
   Cargarajuste: Tcargarajuste;
   ImprimirTextoLibre: TImprimirTextoLibre;
   ObtenerEstadoImpresora: tObtenerEstadoImpresora;
-
+  posCola:Integer;
+  posEncabezado:Integer;
   constructor Create;
   destructor destroy;
   procedure configurarImpresor(ticket:TTicket);
@@ -96,6 +97,11 @@ interface
   procedure imprimirCodigoDeBarras(barcode:string);
    procedure imprimirCodigoDeBarrasCola(posCola:Integer;barcode:string);
   procedure GenerarEtiquetasBarcodes(codigo:string);
+  procedure EscribirEnEncabezado(texto:string);
+   procedure SaltoLineaEncabezado;
+  procedure EscribirEnCola(texto:string);
+  procedure SaltoLineaCola;
+
   end;
 implementation
 
@@ -331,6 +337,8 @@ end;
           error :=EstablecerCola (12, @comando[0]);
           error :=EstablecerCola (13, @comando[0]);
           error :=EstablecerCola (14, @comando[0]);
+          posCola:= 1;
+          posEncabezado:=1;
 
  end;
 
@@ -426,26 +434,27 @@ end;
   barcodeID = #$80;
 
  var
-    barcodeTYPE: char;
-  barcodeHEIGHT: char;
-  barcodeWIDTH: char;
-  barcodeHRI_POS: char;
-  barcodeHRI_LETTER: char;
+    barcodeTYPE: Byte;
+  barcodeHEIGHT: Byte;
+  barcodeWIDTH: Byte;
+  barcodeHRI_POS: Byte;
+  barcodeHRI_LETTER: Byte;
   bar2: AnsiString;
 
 
 begin
-  barcodeTYPE := #$00;
-  barcodeHEIGHT := #$00;
-  barcodeWIDTH := #$00;
-  barcodeHRI_POS := barcodeHRI_POS_BOTTOM;
-  barcodeHRI_LETTER := barcodeHRI_LETTER_FONT_A;
+  barcodeTYPE := Byte(#$00);
+  barcodeHEIGHT := Byte(#$00);
+  barcodeWIDTH := Byte(#$00);
+  barcodeHRI_POS := Byte(barcodeHRI_POS_BOTTOM);
+  barcodeHRI_LETTER := Byte(barcodeHRI_LETTER_FONT_A);
 
   bar2 := AnsiChar(barcodeESC) + AnsiChar(barcodeID) + AnsiChar(barcodeTYPE) +
           AnsiChar(barcodeHEIGHT) + AnsiChar(barcodeWIDTH) + AnsiChar(barcodeHRI_POS) +
           AnsiChar(barcodeHRI_LETTER) + barcode;
 
  error:= EstablecerCola(posCola,pansichar(bar2));
+
 
 
 end;
@@ -500,6 +509,41 @@ begin
   // Ejemplo de uso de funciones relacionadas con comprobantes
 
 end;
+
+procedure TFiscalEpson.EscribirEnCola(texto: string);
+var
+comando:Array[0..200] of ansichar;
+begin
+  comando:= '';
+  texto := strpcopy(comando, texto);
+  error := establecercola(posCola, @comando[0]);
+  posCola:= posCola +1;
+end;
+
+procedure TFiscalEpson.SaltoLineaCola;
+
+begin
+  EscribirEnCola('   ');
+end;
+
+
+
+procedure TFiscalEpson.EscribirEnEncabezado(texto: string);
+var
+comando:Array[0..200] of ansichar;
+begin
+  comando:= '';
+  texto := strpcopy(comando, texto);
+  error := establecerencabezado(posEncabezado, @comando[0]);
+  posEncabezado:= posEncabezado +1;
+end;
+
+procedure TFiscalEpson.SaltoLineaEncabezado;
+
+begin
+  EscribirEnEncabezado('   ');
+end;
+
 
 
 
