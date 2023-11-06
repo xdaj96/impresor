@@ -88,12 +88,11 @@ end;
 
 procedure TTicketTEpson.imprimirCodBarrasValidacionOnline;
 begin
-  if ticket.valnroreferencia = '' then
-    exit;
+  {if ticket.valnroreferencia = '' then
+    exit;}
 
   fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
-  fiscalEpson.imprimirCodigoDeBarras(ticket.valnroreferencia);
-
+  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
 
 end;
 
@@ -353,7 +352,7 @@ cant_caracteres:=13;
  nro_suc_pv:= ticket.sucursal +ticket.fiscla_pv;
  barra_seguimiento:= nro_suc_pv +(TUtils.rightpad(inttostr(nro_comprob), '0', cant_caracteres - length(nro_suc_pv)));
  fiscalEpson.EscribirTextoLibre('Numero de seguimiento:');
- fiscalEpson.EscribirTextoLibre(barra_seguimiento);
+ //fiscalEpson.EscribirTextoLibre(barra_seguimiento);
 
  fiscalEpson.imprimirCodigoDeBarras(barra_seguimiento);
 

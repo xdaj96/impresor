@@ -277,7 +277,12 @@ begin
 
 
 end;
-
+{
+  Función: llevaValidacionConCodBarras
+  Descripcion: Verifica si el codigo del plan de la obra social
+               lleva impresa la validacion por codigo de barras
+  @param string cod_os : el codigo de plan a verificar
+}
 function TBaseTicket.llevaValidacionConCodBarras(cod_os: string): boolean;
 var
   cod_os_habilitadas: array of string;
@@ -287,8 +292,8 @@ begin
   // Inicializamos la variable codBarrasHabilitado en false
   codBarrasHabilitado := False;
 
-  // Asignamos un valor inicial a cod_os_habilitadas (esto debería ser un array de strings válido)
-  cod_os_habilitadas := ['-', 'código2', 'código3'];
+  // Cod. de planes OS que llevan validacion por codigo de barras
+  cod_os_habilitadas := ['WIF', 'WIA', 'WIB','WIG','WIH','WII'];
 
   // Recorremos el array de códigos habilitados para verificar si cod_os está en la lista
   for i := 0 to High(cod_os_habilitadas) do
