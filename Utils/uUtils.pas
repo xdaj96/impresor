@@ -14,7 +14,7 @@ interface
     class function LeftPad(S: string; Ch: Char; Len: Integer): string;
     class function RightPad(S: string; Ch: Char; Len: Integer): string;
     class function CadLongitudFija(cadena : string; longitud : Integer; posicionIzquierda : boolean; valorRelleno : string) : string;
-
+    class function esNumerico(cadena:string): Boolean;
 
   end;
 
@@ -60,7 +60,19 @@ begin
   Result := cadena;
 end;
 
-
+   class function TUtils.esNumerico(cadena: string):boolean;
+    var
+    num:double;
+    begin
+      try
+        // Intenta convertir el string en un número de punto flotante
+        num := StrToFloat(cadena);
+        esNumerico := True;
+      except
+        // Si la conversión falla, el string no es numérico
+        esNumerico := False;
+      end;
+    end;
 
     {
       Descripción: Esta función verifica si una fecha está dentro de un rango específico.
@@ -72,6 +84,9 @@ end;
     begin
       Result := (Now > StrToDateTime(fecha_desde)) and (Now < StrToDateTime(fecha_hasta));
     end;
+
+
+
 
 
 end.

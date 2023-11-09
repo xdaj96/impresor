@@ -1,10 +1,30 @@
 ﻿unit uTicketTEpson;
 
 interface
-    uses uBaseTicket,uFiscalEpson,udTicket,sysUtils,Vcl.DBGrids,uFormaDePago,FiscalPrinterLib_TLB,math,uUtils,dialogs,uRegistryHelper;
+    uses uBaseTicket,uFiscalEpson,udTicket,sysUtils,Vcl.DBGrids,uFormaDePago,FiscalPrinterLib_TLB,math,uUtils,dialogs;
     type
     TTicketTEpson= class(TBaseTicket)
     private
+
+
+    procedure establecerNombreVendedor;
+    procedure EstablecerDireccionFiscalEnTicket;
+    procedure cargarItemsEnTicket;
+    procedure EstablecerFormaPagoEnTicket;
+    procedure RealizarPago(const imp: string; const tipoPago: Integer; const comandos: string);
+    procedure aplicarDescuentoGral;
+    procedure finalizarTicket;
+    procedure iniciarTicketNoFiscal;
+    procedure imprimirItemsTalonOS;
+    procedure imprimirItemsVale;
+    procedure establecerEncabezadoVale;
+    procedure establecerEncabezadoTicketVale;
+    procedure establecerPieTicketVale;
+    procedure imprimirCorteDeTicket;
+    procedure crearTicketVale;
+
+
+    public
     eSTADOFISCAL: string;
     z: integer;
     RESPONSABLEIVA: TiposDeResponsabilidades;
@@ -31,39 +51,16 @@ interface
     ofecupon: string;
     fatal:integer;
     numeroc:string;
-    fiscalEpson:TFiscalEpson;
     ticket:TTicket;
-    nro_comprobdigital: Integer;
     Gfacturador: TDBGrid;
     formaDePago:TFormaDePago;
-    reg:TRegistryHelper;
+
 
     error:LongInt;
 
-    procedure establecerNombreVendedor;
-    procedure EstablecerDireccionFiscalEnTicket;
-    procedure cargarItemsEnTicket;
-    procedure EstablecerFormaPagoEnTicket;
-    procedure RealizarPago(const imp: string; const tipoPago: Integer; const comandos: string);
-    procedure aplicarDescuentoGral;
-    procedure finalizarTicket;
-    procedure EstablecerEncabezadoTalonOS;
-    procedure iniciarTicketNoFiscal;
-    procedure imprimirItemsTalonOS;
-    procedure imprimirItemsVale;
-    procedure establecerEncabezadoVale;
-    procedure establecerEncabezadoTicketVale;
-    procedure establecerPieTicketVale;
-    procedure imprimirCorteDeTicket;
-    procedure crearTicketVale;
-    procedure imprimirDatosAfiliadoValidacion;
-    procedure imprimirCodBarrasValidacionOnline;
-    procedure imprimirFormaDePagoEnTicket;
-    procedure imprimirCodBarrasSeguimientoOValidacion;
-    procedure imprimirBarrasSeguimientoComprobante;
-    public
       constructor Create(unTicket:TTicket;gridFacturador:TDBGrid);
       procedure ImprimirTicket(var imprimio: Boolean); override;
+      {procedure imprimirFormaDePagoEnTicket; }
     end;
 
 
@@ -72,11 +69,10 @@ implementation
 
 constructor TTicketTEpson.Create(unTicket:TTicket;gridFacturador:TDBGrid);
 begin
+     inherited; // Llama al constructor de la clase padre
      ticket:= unTicket;
-     fiscalEpson:= TFiscalEpson.Create;
      fiscalEpson.configurarImpresor(ticket);
      gFacturador:= gridFacturador;
-     reg:= TRegistryHelper.Create;
 end;
 
 
@@ -86,66 +82,6 @@ end;
 
 
 
-procedure TTicketTEpson.imprimirCodBarrasValidacionOnline;
-begin
-  {if ticket.valnroreferencia = '' then
-    exit;}
-
-  fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
-  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
-
-end;
-
-procedure TTicketTEpson.imprimirDatosAfiliadoValidacion;
-begin
-
-  //Si no tengo conformidad sale del procedimiento
-  if (reg.LeerValor('conformidad_afiliado') <> 'S') or (ticket.codigo_OS = '') then
-    exit;
-
-  FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
-  FiscalEpson.escribirTextoLibre('FIRMA:........................................');
-  FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
-  FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
-  FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
-  FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
-
-end;
-
-
-
-
-
-//----------------------------ENCABEZADO TALON OS-----------------------------//
-procedure TTicketTEpson.EstablecerEncabezadoTalonOS;
-begin
-  fiscalEpson.borrarEncabezadoYCola;
-  {Encabezado talon obra social}
-  fiscalEpson.EscribirEnEncabezado('Vendedor: ' + ticket.nom_vendedor);
-  fiscalEpson.EscribirEnEncabezado('Obra Social: ' + ticket.codigo_OS + '-' +   ticket.nombre_os);
-  fiscalEpson.EscribirEnEncabezado('Coseguro 1: ' + ticket.codigo_Co1 + '-' +  ticket.nombre_co1);
-  fiscalEpson.EscribirEnEncabezado('Coseguro 2: ' + ticket.codigo_Cos2 + '-' + ticket.nombre_cos2);
-  fiscalEpson.EscribirEnEncabezado('Afiliado: ' + ticket.afiliado_apellido + ' ' + ticket.afiliado_nombre);
-  fiscalEpson.EscribirEnEncabezado('Nro afiliado: ' + ticket.afiliado_numero);
-  fiscalEpson.EscribirEnEncabezado('Mat. Med: ' + ticket.medico_nro_matricula);
-  fiscalEpson.EscribirEnEncabezado('Receta: ' + ticket.numero_receta);
-  fiscalEpson.EscribirEnEncabezado('Numero de ref: ' + ticket.valnroreferencia);
-
-
-
-
-
-
-  {Pie talon obra social}
-
-  imprimirFormaDePagoEnTicket;
-
-end;
-
-
-
-
-//----------------------------ENCABEZADO TALON OS-----------------------------//
 
 
 //----------------------------ENCABEZADO TICKET VALE-----------------------------//
@@ -342,40 +278,8 @@ begin
 
 //--------------------------COD BARRAS SEGUIMIENTO ----------------------------------//
 
-procedure TTicketTEpson.imprimirBarrasSeguimientoComprobante;
-var
-  barra_seguimiento:string;
-  nro_suc_pv:string;
-  cant_caracteres:Integer;
-begin
-cant_caracteres:=13;
- nro_suc_pv:= ticket.sucursal +ticket.fiscla_pv;
- barra_seguimiento:= nro_suc_pv +(TUtils.rightpad(inttostr(nro_comprob), '0', cant_caracteres - length(nro_suc_pv)));
- fiscalEpson.EscribirTextoLibre('Numero de seguimiento:');
- //fiscalEpson.EscribirTextoLibre(barra_seguimiento);
-
- fiscalEpson.imprimirCodigoDeBarras(barra_seguimiento);
-
-end;
 
 
-procedure TTicketTEpson.imprimirCodBarrasSeguimientoOValidacion;
-begin
-
-  if  (ticket.codigo_OS <> '') and llevaValidacionConCodBarras(ticket.codigo_OS)  then
-  begin
-
-     imprimirCodBarrasValidacionOnline;
-     imprimirDatosAfiliadoValidacion;
-  end
-  else
-      begin
-
-        imprimirBarrasSeguimientoComprobante
-      end;
-
-
-end;
 
 
 
@@ -615,6 +519,7 @@ begin
 
 
 
+
     // -----------------------------------------------------------------------------//
     // --------------------------apertura de comprobante C---------------------------//
 
@@ -718,12 +623,11 @@ begin
       END;
 
     END;
-
-
+    imprimi:=true;
 
   end;
 end;
-
+       {
 procedure TTicketTEpson.imprimirFormaDePagoEnTicket;
 begin
 
@@ -732,7 +636,7 @@ begin
    fiscalEpson.escribirEnCola('EF: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpEfectivo), -2)) + ' CH: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpCheque), -2)) + ' CC: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpCC), -2)) + ' TJ: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpTarjeta), -2)));
 
 end;
-
+             }
 
 
 end.

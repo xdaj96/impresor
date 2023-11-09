@@ -1667,29 +1667,26 @@ procedure Tfimpresor.BimprimireClick(Sender: TObject);
 var
 impresion_ok: boolean;
 begin
+
 if ticket.tip_comprobante='A' then
            BEGIN
               ImprimirTicketAepson(impresion_ok);
+              exit;
            END;
+
+{Ticket Factura B}
 if ticket.tip_comprobante='B' then
-           BEGIN
               ticketImprimir:= TTicketBEpson.Create(ticket,GFacturador);
-              ticketImprimir.ImprimirTicket(impresion_ok);
-               nro_comprob:= ticketImprimir.nro_comprob;
-              nro_comprobdigital:= ticketImprimir.nro_comprobdigital;
-              imprimi:= ticketImprimir.imprimi;
 
-           END;
+{Ticket T}
 if ticket.tip_comprobante='T' then
-           begin
+    ticketImprimir:= TTicketTEpson.Create(ticket,GFacturador);
 
-              ticketImprimir:= TTicketTEpson.Create(ticket,GFacturador);
-              ticketImprimir.ImprimirTicket(impresion_ok);
-              nro_comprob:= ticketImprimir.nro_comprob;
-              nro_comprobdigital:= ticketImprimir.nro_comprobdigital;
+ticketImprimir.ImprimirTicket(impresion_ok);
+nro_comprob:= ticketImprimir.nro_comprob;
+nro_comprobdigital:= ticketImprimir.nro_comprobdigital;
+imprimi:= ticketImprimir.imprimi;
 
-              imprimi:= ticketImprimir.imprimi;
-           end
 end;
 
 procedure Tfimpresor.BlimpiartodoClick(Sender: TObject);

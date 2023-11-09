@@ -3,25 +3,34 @@ unit uBaseTicket;
 interface
   uses
    Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
-  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms;
+  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson,uRegistryHelper;
 
  type
   TBaseTicket = class
+  private
+   procedure imprimirDatosAfiliadoValidacion;
+   procedure imprimirCodBarrasValidacionOnline;
+   procedure imprimirBarrasSeguimientoComprobante;
+   function llevaValidacionConCodBarras(cod_os: string): boolean;
+
   protected
   ticket: TTicket;
   GFacturador: TDBGRID;
   formaDePago:TFormaDePago;
+  fiscalEpson: TFiscalEpson;
+  reg:TRegistryHelper;
 
+  procedure imprimirCodBarrasSeguimientoOValidacion;
   public
       nro_comprobdigital:Integer;
       imprimi: boolean;
       nro_comprob:Integer;
 
-      function llevaValidacionConCodBarras(cod_os: string): boolean;
-
-
+      procedure EstablecerEncabezadoTalonOS;
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
       procedure copiaDigital;
+      procedure imprimirFormaDePagoEnTicket;
+
 
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
   end;
@@ -64,11 +73,11 @@ constructor TBaseTicket.Create(unTicket: TTicket;gridFacturador: TDBGRID);
 begin
   ticket:= unTicket;
   GFacturador:= gridFacturador;
-
+   fiscalEpson:= TFiscalEpson.Create;
   {Establecer metodo de pago}
   formaDePago:= TFormaDePago.Create;
   formaDePago.cargarFormaPago(ticket);
-
+  reg:= TRegistryHelper.Create;
 
 
 
@@ -277,6 +286,109 @@ begin
 
 
 end;
+
+
+
+//----------------------------ENCABEZADO TALON OS-----------------------------//
+procedure TBaseTicket.EstablecerEncabezadoTalonOS;
+begin
+  fiscalEpson.borrarEncabezadoYCola;
+  {Encabezado talon obra social}
+  fiscalEpson.EscribirEnEncabezado('Vendedor: ' + ticket.nom_vendedor);
+  fiscalEpson.EscribirEnEncabezado('Obra Social: ' + ticket.codigo_OS + '-' +   ticket.nombre_os);
+  fiscalEpson.EscribirEnEncabezado('Coseguro 1: ' + ticket.codigo_Co1 + '-' +  ticket.nombre_co1);
+  fiscalEpson.EscribirEnEncabezado('Coseguro 2: ' + ticket.codigo_Cos2 + '-' + ticket.nombre_cos2);
+  fiscalEpson.EscribirEnEncabezado('Afiliado: ' + ticket.afiliado_apellido + ' ' + ticket.afiliado_nombre);
+  fiscalEpson.EscribirEnEncabezado('Nro afiliado: ' + ticket.afiliado_numero);
+  fiscalEpson.EscribirEnEncabezado('Mat. Med: ' + ticket.medico_nro_matricula);
+  fiscalEpson.EscribirEnEncabezado('Receta: ' + ticket.numero_receta);
+  fiscalEpson.EscribirEnEncabezado('Numero de ref: ' + ticket.valnroreferencia);
+
+  {Pie talon obra social}
+
+  imprimirFormaDePagoEnTicket;
+
+end;
+
+
+
+
+//----------------------------ENCABEZADO TALON OS-----------------------------//
+
+procedure TBaseTicket.imprimirFormaDePagoEnTicket;
+begin
+
+  fiscalEpson.escribirEnCola('REC: ' + FLOATTOSTR(ticket.importebruto) + '     OS: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpOS), -2)));
+  fiscalEpson.escribirEnCola('CO1: ' + formaDePago.ImpCO1 + ' CO2: ' + formaDePago.ImpCO2 + ' AFI: ' + FLOATTOSTR(roundto(formaDePago.calcularTotalPorAfiliado, -2)));
+   fiscalEpson.escribirEnCola('EF: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpEfectivo), -2)) + ' CH: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpCheque), -2)) + ' CC: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpCC), -2)) + ' TJ: ' + FLOATTOSTR(roundto(strtofloat(formaDePago.ImpTarjeta), -2)));
+
+end;
+
+
+
+//------------------------------------------------------------------------------//
+
+{Metodo que imprime el codigo de barras para validacion online}
+procedure TBaseTicket.imprimirCodBarrasValidacionOnline;
+begin
+  fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
+  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
+end;
+
+{Metodo que imprime el codigo de barras para validacion online}
+procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
+begin
+  FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
+  FiscalEpson.escribirTextoLibre('FIRMA:........................................');
+  FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
+  FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
+  FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
+  FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
+end;
+
+{Metodo que valida si el ticket es con co}
+procedure TBaseticket.imprimirCodBarrasSeguimientoOValidacion;
+begin
+
+  if  llevaValidacionConCodBarras(ticket.codigo_OS)  then
+  begin
+
+     imprimirCodBarrasValidacionOnline;
+     imprimirDatosAfiliadoValidacion;
+  end
+  else
+      begin
+
+        imprimirBarrasSeguimientoComprobante
+      end;
+
+
+end;
+
+
+procedure TBaseTicket.imprimirBarrasSeguimientoComprobante;
+var
+  barra_seguimiento:string;
+  nro_suc_pv:string;
+  cant_caracteres:Integer;
+begin
+cant_caracteres:=13;
+ nro_suc_pv:= ticket.sucursal +ticket.fiscla_pv;
+ barra_seguimiento:= nro_suc_pv +(TUtils.rightpad(inttostr(nro_comprob), '0', cant_caracteres - length(nro_suc_pv)));
+ fiscalEpson.EscribirTextoLibre('Numero de seguimiento:');
+ //fiscalEpson.EscribirTextoLibre(barra_seguimiento);
+
+ fiscalEpson.imprimirCodigoDeBarras(barra_seguimiento);
+
+end;
+
+
+
+
+
+
+//------------------------------------------------------------------------------//
+
 {
   Función: llevaValidacionConCodBarras
   Descripcion: Verifica si el codigo del plan de la obra social
