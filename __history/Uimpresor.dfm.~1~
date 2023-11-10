@@ -31,7 +31,7 @@ object fimpresor: Tfimpresor
         Top = 470
         Width = 64
         Height = 13
-        Caption = 'Version 0.4.4'
+        Caption = 'Version 3.0.0'
       end
       object flist: TFileListBox
         Left = 0

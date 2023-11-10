@@ -2,7 +2,7 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
   msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson,uRegistryHelper;
 
  type
@@ -330,9 +330,17 @@ end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirCodBarrasValidacionOnline;
+var
+cod_ref:string;
 begin
+
+
+
+
   fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
-  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
+  cod_ref:= TUtils.RightPad(ticket.valnroreferencia,'0',13);
+  fiscalEpson.imprimirCodigoDeBarras(cod_ref);
+
 end;
 
 {Metodo que imprime el codigo de barras para validacion online}
@@ -350,7 +358,7 @@ end;
 procedure TBaseticket.imprimirCodBarrasSeguimientoOValidacion;
 begin
 
-  if  llevaValidacionConCodBarras(ticket.codigo_OS)  then
+  if  (llevaValidacionConCodBarras(ticket.codigo_OS)) and not(TUtils.esCampoVacio(ticket.valnroreferencia)) then
   begin
 
      imprimirCodBarrasValidacionOnline;

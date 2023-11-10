@@ -51,7 +51,7 @@ interface
     ofecupon: string;
     fatal:integer;
     numeroc:string;
-    ticket:TTicket;
+
     Gfacturador: TDBGrid;
     formaDePago:TFormaDePago;
 

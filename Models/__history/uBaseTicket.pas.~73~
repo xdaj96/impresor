@@ -2,7 +2,7 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
   msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson,uRegistryHelper;
 
  type
@@ -330,23 +330,25 @@ end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirCodBarrasValidacionOnline;
+var
+cod_ref:string;
 begin
   fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
-  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
+  cod_ref:= TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia));
+  ShowMessage(cod_ref);
+  fiscalEpson.imprimirCodigoDeBarras(cod_ref);
+
 end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
 begin
-
-
   FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
   FiscalEpson.escribirTextoLibre('FIRMA:........................................');
   FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
   FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
   FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
   FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
-
 end;
 
 {Metodo que valida si el ticket es con co}

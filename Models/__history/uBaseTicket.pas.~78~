@@ -2,7 +2,7 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
   msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson,uRegistryHelper;
 
  type
@@ -11,6 +11,8 @@ interface
    procedure imprimirDatosAfiliadoValidacion;
    procedure imprimirCodBarrasValidacionOnline;
    procedure imprimirBarrasSeguimientoComprobante;
+   function llevaValidacionConCodBarras(cod_os: string): boolean;
+
   protected
   ticket: TTicket;
   GFacturador: TDBGRID;
@@ -23,8 +25,6 @@ interface
       nro_comprobdigital:Integer;
       imprimi: boolean;
       nro_comprob:Integer;
-
-      function llevaValidacionConCodBarras(cod_os: string): boolean;
 
       procedure EstablecerEncabezadoTalonOS;
       procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
@@ -77,7 +77,7 @@ begin
   {Establecer metodo de pago}
   formaDePago:= TFormaDePago.Create;
   formaDePago.cargarFormaPago(ticket);
-
+  reg:= TRegistryHelper.Create;
 
 
 
@@ -330,30 +330,30 @@ end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirCodBarrasValidacionOnline;
+var
+cod_ref:string;
 begin
-  if (ticket.valnroreferencia = '') OR not TUtils.esNumerico(ticket.valnroreferencia) then
+
+  if TUtils.esCampoVacio(ticket.valnroreferencia) then
     exit;
 
+
+
   fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
-  fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
+  cod_ref:= TUtils.RightPad(ticket.valnroreferencia,'0',13);
+  fiscalEpson.imprimirCodigoDeBarras(cod_ref);
 
 end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
 begin
-
-  //Si no tengo conformidad sale del procedimiento
-  if (reg.LeerValor('conformidad_afiliado') <> 'S') or (ticket.codigo_OS = '') then
-    exit;
-
   FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
   FiscalEpson.escribirTextoLibre('FIRMA:........................................');
   FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
   FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
   FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
   FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
-
 end;
 
 {Metodo que valida si el ticket es con co}

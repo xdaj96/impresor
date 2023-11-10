@@ -331,29 +331,19 @@ end;
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirCodBarrasValidacionOnline;
 begin
-  if (ticket.valnroreferencia = '') OR not TUtils.esNumerico(ticket.valnroreferencia) then
-    exit;
-
   fiscalEpson.EscribirTextoLibre('Codigo Validacion online:');
   fiscalEpson.imprimirCodigoDeBarras(TUtils.RightPad(ticket.valnroreferencia,'0',13 - length(ticket.valnroreferencia)));
-
 end;
 
 {Metodo que imprime el codigo de barras para validacion online}
 procedure TBaseTicket.imprimirDatosAfiliadoValidacion;
 begin
-
-  //Si no tengo conformidad sale del procedimiento
-  if (reg.LeerValor('conformidad_afiliado') <> 'S') or (ticket.codigo_OS = '') then
-    exit;
-
   FiscalEpson.escribirTextoLibre('********** CONFORMIDAD DEL AFILIADO **********');
   FiscalEpson.escribirTextoLibre('FIRMA:........................................');
   FiscalEpson.escribirTextoLibre('ACLARACION:...................................');
   FiscalEpson.escribirTextoLibre('DOCUMENTO:....................................');
   FiscalEpson.escribirTextoLibre('DOMICILIO:....................................');
   FiscalEpson.escribirTextoLibre('TELEFONO:.....................................');
-
 end;
 
 {Metodo que valida si el ticket es con co}
