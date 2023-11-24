@@ -59,7 +59,7 @@ interface
     error:LongInt;
 
       constructor Create(unTicket:TTicket;gridFacturador:TDBGrid);
-      procedure ImprimirTicket(var imprimio: Boolean); override;
+      procedure ImprimirTicket(var imprimio: Boolean;var reimpresion:boolean); override;
       {procedure imprimirFormaDePagoEnTicket; }
     end;
 
@@ -493,8 +493,9 @@ end;
 
 
 
-procedure TTicketTEpson.ImprimirTicket(var imprimio: Boolean);
-
+procedure TTicketTEpson.ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean);
+var
+  respuesta_estado:LongInt;
 begin
 
   // error  := ObtenerEstadoImpresora();
@@ -505,10 +506,18 @@ begin
     begin
     try }
 
+
+
+
+
+
   error := fiscalEpson.ConsultarNumeroComprobanteUltimo('83', @respuesta, 2000);
   if not((respuesta = '') or (respuesta = 'Ninguno')) then
   begin
-    nro_comprobdigital := strtoint(respuesta) + 1;
+    nro_comprobdigital := strtoint(respuesta);
+
+     nro_comprobdigital := nro_comprobdigital +1;
+
     // copiadigital;
     // ---------------------------borrado encabezados y cola-----------------------//
     fiscalEpson.borrarEncabezadoYCola;
@@ -549,6 +558,7 @@ begin
     comando := '';
     texto := strpcopy(comando, '08F6|0000');
     error := fiscalEpson.enviarcomando(comando);
+
 
 
 
@@ -623,6 +633,12 @@ begin
       END;
 
     END;
+
+
+
+        // Aquí puedes manejar el valor de error y respuesta_estado según sea necesario
+        // Por ejemplo, mostrarlos en un MessageBox
+
     imprimi:=true;
 
   end;

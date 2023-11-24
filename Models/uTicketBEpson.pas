@@ -2,7 +2,7 @@
 
 interface
 
-uses uBaseTicket, uFiscalEpson, udTicket, sysUtils, Vcl.DBGrids, uFormaDePago,
+uses uBaseTicket, uFiscalEpson, udTicket, sysUtils, Vcl.DBGrids, uFormaDePago,Dialogs,
   FiscalPrinterLib_TLB, math, uUtils;
 
 type
@@ -74,7 +74,7 @@ CODIGOIVA: string;
 ofecupon: string;
 numeroc: string;
     constructor Create(unTicket: TTicket; gridFacturador: TDBGRID);
-    procedure ImprimirTicket(var imprimio: Boolean); override;
+    procedure ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean); override;
   end;
 
 implementation
@@ -570,7 +570,9 @@ end;
 
 
 
-procedure TTicketBEpson.ImprimirTicket(var imprimio: Boolean);
+procedure TTicketBEpson.ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean);
+var
+tapaAbierta:Integer;
 begin
     error:= Fiscalepson.ConsultarNumeroComprobanteUltimo('82',@respuesta,2000);
 
@@ -584,7 +586,6 @@ begin
       //-----------------------------------------------------------------------------//
         establecerNombreVendedor;
     EstablecerDireccionFiscalEnTicket;
-
 
 
 

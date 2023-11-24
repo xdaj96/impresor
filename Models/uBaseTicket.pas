@@ -27,7 +27,7 @@ interface
       nro_comprob:Integer;
 
       procedure EstablecerEncabezadoTalonOS;
-      procedure ImprimirTicket(var imprimio: Boolean); virtual; abstract;
+      procedure ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean); virtual; abstract;
       procedure copiaDigital;
       procedure imprimirFormaDePagoEnTicket;
 

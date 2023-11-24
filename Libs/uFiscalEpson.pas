@@ -21,6 +21,9 @@ interface
 
   tEstablecerEncabezado= function( numero_encabezado: integer;  descripcion: PansiChar ): LongInt; StdCall;
 
+  TConsultarEstado = function(idConsulta: LongInt; var respuesta: LongInt): LongInt; stdcall;
+
+
   tAbrirComprobante= function( id_tipo_documento: integer)  : LongInt; StdCall;
 
   tCerrarComprobante= function()  : LongInt; StdCall;
@@ -74,7 +77,7 @@ interface
   establecerencabezado: testablecerencabezado;
   ConsultarEncabezado: tConsultarEncabezado;
   abrircomprobante: tabrircomprobante;
-  CerrarComprobante: tCerrarComprobante;
+  CerrarComprob: tCerrarComprobante;
   EnviarComando: tEnviarComando;
   EstablecerCola: tEstablecerCola;
   CargarTextoExtra: tCargarTextoExtra;
@@ -88,10 +91,16 @@ interface
   Cargarajuste: Tcargarajuste;
   ImprimirTextoLibre: TImprimirTextoLibre;
   ObtenerEstadoImpresora: tObtenerEstadoImpresora;
+  consultarEstado:tConsultarEstado;
   posCola:Integer;
   posEncabezado:Integer;
+  respuesta_estado:LongInt;
   constructor Create;
   destructor destroy;
+
+  function cerrarComprobante():LongInt;
+  function tienePapel():boolean;
+  function tieneLaTapaCerrada():boolean;
   procedure configurarImpresor(ticket:TTicket);
   procedure borrarEncabezadoYCola;
   procedure imprimirCodigoDeBarras(barcode:string);
@@ -140,6 +149,14 @@ implementation
     Exit;
   end;
 
+  @consultarEstado := GetProcAddress(dll, 'ConsultarEstado');
+  if not Assigned(consultarEstado) then
+  begin
+    ShowMessage('Error al asignar funcion: ConsultarEstado');
+    Exit;
+  end;
+
+
   // obtener las referencias a funciones:  "ConfigurarVelocidad"
   @ConfigurarVelocidad := GetProcAddress(dll, 'ConfigurarVelocidad');
   if not Assigned(ConfigurarVelocidad) then
@@ -186,8 +203,8 @@ implementation
     ShowMessage('Error al asignar funcion: AbrirComprobante');
     Exit;
   end;
-  @CerrarComprobante := GetProcAddress(dll, 'CerrarComprobante');
-  if not Assigned(abrircomprobante) then
+  @CerrarComprob := GetProcAddress(dll, 'CerrarComprobante');
+  if not Assigned(CerrarComprob) then
   begin
     ShowMessage('Error al asignar funcion: CerrarComprobante');
     Exit;
@@ -292,6 +309,34 @@ begin
   FreeLibrary(dll);
 
 end;
+
+
+ function TFiscalEpson.tienePapel:Boolean;
+
+ begin
+   error := ConsultarEstado(7001, respuesta_estado);
+   Result:= respuesta_estado=0;
+ end;
+
+ function TFiscalEpson.tieneLaTapaCerrada:Boolean;
+
+ begin
+   error := ConsultarEstado(7013, respuesta_estado);
+
+   Result:= respuesta_estado<>1;
+ end;
+
+
+
+ function TFiscalEpson.cerrarComprobante;
+ begin
+    if not tienePapel or not tieneLaTapaCerrada then
+    begin
+      raise Exception.Create('El fiscal no tiene papel o esta la tapa abierta');
+    end;
+    Result:=CerrarComprob;
+
+ end;
 
 
 
@@ -513,6 +558,10 @@ begin
 
 end;
 
+
+
+
+
 procedure TFiscalEpson.EscribirEnCola(texto: string);
 var
 comando:Array[0..200] of ansichar;
@@ -528,6 +577,8 @@ procedure TFiscalEpson.SaltoLineaCola;
 begin
   EscribirEnCola('   ');
 end;
+
+
 
 
 

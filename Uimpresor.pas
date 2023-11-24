@@ -100,7 +100,7 @@ type
     nro_comprobdigital: integer;
     impresion: string;
     ticketImprimir:TBaseTicket;
-
+    reimpresion:boolean;
 
   public
     procedure SetTicket(unTicket:TTicket);
@@ -569,7 +569,7 @@ for I := 0 to flist.Items.Count -1 do
   end;
 
   //-------------------------tablas ivas-------------------------------//
-
+  reimpresion:= False;
 
   if ticket.fiscal='H' then
   BEGIN
@@ -1666,7 +1666,12 @@ end;
 procedure Tfimpresor.BimprimireClick(Sender: TObject);
 var
 impresion_ok: boolean;
+
 begin
+impresion_ok:= False;
+
+
+try
 
 if ticket.tip_comprobante='A' then
            BEGIN
@@ -1682,12 +1687,30 @@ if ticket.tip_comprobante='B' then
 if ticket.tip_comprobante='T' then
     ticketImprimir:= TTicketTEpson.Create(ticket,GFacturador);
 
-ticketImprimir.ImprimirTicket(impresion_ok);
-nro_comprob:= ticketImprimir.nro_comprob;
+ticketImprimir.ImprimirTicket(impresion_ok,reimpresion);
+
+if not impresion_ok then
+begin
+  reimpresion:= True;
+end;
+
+
+ nro_comprob:= ticketImprimir.nro_comprob;
 nro_comprobdigital:= ticketImprimir.nro_comprobdigital;
+
 imprimi:= ticketImprimir.imprimi;
 
+except 
+  on E: Exception do
+  begin
+    // Capturar y mostrar información sobre la excepción
+    ShowMessage(E.Message);
+    reimpresion:= True;
+    bimprimirE.click;
+  end;
+
 end;
+ end;
 
 procedure Tfimpresor.BlimpiartodoClick(Sender: TObject);
 begin
