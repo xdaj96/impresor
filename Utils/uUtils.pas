@@ -16,6 +16,7 @@ interface
     class function CadLongitudFija(cadena : string; longitud : Integer; posicionIzquierda : boolean; valorRelleno : string) : string;
     class function esNumerico(cadena:string): Boolean;
     class function esCampoVacio(const Campo: string): Boolean;
+    class function contienePalabra(palabra:string;texto:string):boolean;
   end;
 
 
@@ -29,6 +30,11 @@ begin
   Result := Trim(Campo) = '';
 end;
 
+
+class function TUtils.contienePalabra(palabra:string;texto:string): Boolean;
+begin
+  Result := Pos(palabra,texto) > 0;
+end;
 
 
 class function TUtils.LeftPad(S: string; Ch: Char; Len: Integer): string;

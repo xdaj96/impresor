@@ -7,6 +7,7 @@ object fimpresor: Tfimpresor
   ClientHeight = 519
   ClientWidth = 531
   Color = clBtnFace
+  UseDockManager = True
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -18,7 +19,7 @@ object fimpresor: Tfimpresor
   PixelsPerInch = 96
   TextHeight = 13
   object pg: TPageControl
-    Left = -1
+    Left = 3
     Top = 0
     Width = 530
     Height = 517
@@ -27,11 +28,11 @@ object fimpresor: Tfimpresor
     object Principal: TTabSheet
       Caption = 'Principal'
       object Label1: TLabel
-        Left = 453
-        Top = 470
+        Left = 445
+        Top = 468
         Width = 64
         Height = 13
-        Caption = 'Version 0.4.4'
+        Caption = 'Versi'#243'n 0.5.0'
       end
       object flist: TFileListBox
         Left = 0
@@ -46,7 +47,7 @@ object fimpresor: Tfimpresor
         Left = 0
         Top = 102
         Width = 517
-        Height = 164
+        Height = 163
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
         Font.Height = -11
@@ -58,9 +59,9 @@ object fimpresor: Tfimpresor
         TabOrder = 1
       end
       object binsertar: TBitBtn
-        Left = 224
-        Top = 461
-        Width = 52
+        Left = 242
+        Top = 254
+        Width = 81
         Height = 25
         Caption = 'Insertar'
         Font.Charset = DEFAULT_CHARSET
@@ -101,9 +102,9 @@ object fimpresor: Tfimpresor
         OnClick = binsertarClick
       end
       object Blimpiartodo: TBitBtn
-        Left = 180
-        Top = 462
-        Width = 45
+        Left = 289
+        Top = 461
+        Width = 109
         Height = 25
         Caption = 'Limpiar (F2)'
         Font.Charset = DEFAULT_CHARSET
@@ -151,9 +152,9 @@ object fimpresor: Tfimpresor
         ControlData = {000300004F0300004F030000}
       end
       object bimprimir: TBitBtn
-        Left = 279
-        Top = 462
-        Width = 52
+        Left = 0
+        Top = 254
+        Width = 121
         Height = 25
         Caption = 'Imprimir'
         Font.Charset = DEFAULT_CHARSET
@@ -195,9 +196,9 @@ object fimpresor: Tfimpresor
       end
       object Gfacturador: TDBGrid
         Left = 1
-        Top = 272
+        Top = 280
         Width = 516
-        Height = 190
+        Height = 182
         TabStop = False
         Color = clWhite
         DataSource = dsource
@@ -625,8 +626,8 @@ object fimpresor: Tfimpresor
           end>
       end
       object Bimprimire: TBitBtn
-        Left = 338
-        Top = 461
+        Left = 127
+        Top = 254
         Width = 109
         Height = 25
         Caption = 'ImprimirE'
@@ -666,6 +667,81 @@ object fimpresor: Tfimpresor
         TabOrder = 7
         Visible = False
         OnClick = BimprimireClick
+      end
+      object Button2: TButton
+        Left = 199
+        Top = 461
+        Width = 84
+        Height = 25
+        Caption = 'ESTADO'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Bitstream Vera Sans Mono'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 8
+        Visible = False
+        OnClick = Button2Click
+      end
+      object Button3: TButton
+        Left = 109
+        Top = 461
+        Width = 84
+        Height = 25
+        Caption = 'IMPRIMIR Z'
+        Enabled = False
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Bitstream Vera Sans Mono'
+        Font.Style = []
+        ParentFont = False
+        TabOrder = 9
+        Visible = False
+        OnClick = Button3Click
+      end
+      object btnReimprimir: TBitBtn
+        Left = 1
+        Top = 461
+        Width = 109
+        Height = 25
+        Caption = 'Reimprimir'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -11
+        Font.Name = 'Bitstream Vera Sans Mono'
+        Font.Style = []
+        Glyph.Data = {
+          36030000424D3603000000000000360000002800000010000000100000000100
+          1800000000000003000000000000000000000000000000000000FFFFFFFFFFFF
+          FFFFFFFFFFFFD7C39BECE3D6ECE3D6ECE3D6ECE3D6ECE3D6ECE3D6D7C39BFFFF
+          FFFFFFFFFFFFFFFFFFFFB0ACACB1ACACA7A2A2726C73C4AB7FEDE1D5EDE1D5ED
+          E1D5EDE1D5EDE1D5EDE1D5C4AB7F767177A49E9EA9A4A4ABA5A5958F8FC3C0BF
+          C3C0BF837D84C6A874E0CBAEE0CBAEE0CBAEE0CBAEE0CBAEE0CBAEC6A874837D
+          84C3C0BFC3C0BF999292A49FA1D1CFCED1CFCED3D2D1D2D2D3D0D0D2D0D0D2D0
+          D0D2D0D0D2D0D0D2D0D0D2D2D2D3D3D2D1BACAD76E9BE3A49FA1AAA7A7D9D7D7
+          D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7D7D9D7
+          D78AC3E9004BFBABA8A8B7B3B3E6E8E9D6C5AFBC6B10BB6A0FBB6A0FBB6A0FBB
+          6A0FBB6A0FBB6A0FBB6A0FBB6A0FBC6B10D6C5AFE6E8E9B8B5B5BCB9BAEEF2F5
+          BA7B3EE1A942E1A842E1A842E1A842E1A842E1A842E1A842E1A842E1A842E1A9
+          42BA7B3EEEF2F5BFBBBCCDC8C9F8FCFFCD9753EEC670EEC771EEC771EEC771EE
+          C771EEC771EEC771EEC771EEC771EEC670CD9753F8FCFFCECBCCD2D0D0FCFFFF
+          D7A55CEDC977E9BF68E9BF68E9BF68E9BF68E9BF68E9BF68E9BF68E9BF68EDC9
+          77D7A55CFCFFFFD4D1D0DEDCDBFFFFFFE8C070E0AC54B99D6BD7BD91D7BD91D7
+          BD91D7BD91D7BD91D7BD91B99D6BE0AC54E8C070FFFFFFE3DFDFD1CBCDBCBBC0
+          DEB673CF9E5FC4AB7FDFCAADDFCAADDFCAADDFCAADDFCAADDFCAADC4AB7FCD99
+          56DDB36EBEBDC1D1CACCFFFFFFFFFFFFFFFFFFFFFFFFD0BD98ECDFD1ECDFD1EC
+          DFD1ECDFD1ECDFD1ECDFD1D0BD98FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+          FFFFFFFFFFFFD5C4A4EFE4D8EFE4D8EFE4D8EFE4D8EFE4D8EFE4D8D5C4A4FFFF
+          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDED0B8F5EDE4F5EDE4F5
+          EDE4F5EDE4F5EDE4F5EDE4DED0B8FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+          FFFFFFFFFFFFE2D6C1F8F3EAF8F3EAF8F3EAF8F3EAF8F3EAF8F3EAE2D6C1FFFF
+          FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE7DDCDEFE8DBEFE8DBEF
+          E8DBEFE8DBEFE8DBEFE8DBE8DFD0FFFFFFFFFFFFFFFFFFFFFFFF}
+        ParentFont = False
+        TabOrder = 10
+        OnClick = btnReimprimirClick
       end
     end
     object Configuracion: TTabSheet
@@ -751,39 +827,6 @@ object fimpresor: Tfimpresor
           298)
       end
     end
-  end
-  object Button3: TButton
-    Left = 86
-    Top = 486
-    Width = 84
-    Height = 25
-    Caption = 'IMPRIMIR Z'
-    Enabled = False
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Bitstream Vera Sans Mono'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 1
-    Visible = False
-    OnClick = Button3Click
-  end
-  object Button2: TButton
-    Left = 3
-    Top = 486
-    Width = 84
-    Height = 25
-    Caption = 'ESTADO'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Bitstream Vera Sans Mono'
-    Font.Style = []
-    ParentFont = False
-    TabOrder = 2
-    Visible = False
-    OnClick = Button2Click
   end
   object dsource: TDataSource
     DataSet = cdsdetalle
@@ -945,7 +988,7 @@ object fimpresor: Tfimpresor
     end
   end
   object contador: TTimer
-    Interval = 500
+    Interval = 2000
     OnTimer = contadorTimer
     Left = 419
     Top = 128

@@ -2,8 +2,8 @@ unit uBaseTicket;
 
 interface
   uses
-   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,
-  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,sysutils,Forms,uFiscalEpson,uRegistryHelper;
+   Xml.xmldom, Xml.XMLIntf,udTicket, Vcl.DBGrids,uUtils,uFormaDePago,Dialogs,   System.SysUtils, System.IOUtils,
+  msxmldom, xml.xmldoc,FiscalPrinterLib_TLB,windows,math,Forms,uFiscalEpson,uRegistryHelper;
 
  type
   TBaseTicket = class
@@ -11,6 +11,7 @@ interface
    procedure imprimirDatosAfiliadoValidacion;
    procedure imprimirCodBarrasValidacionOnline;
    procedure imprimirBarrasSeguimientoComprobante;
+
    function llevaValidacionConCodBarras(cod_os: string): boolean;
 
   protected
@@ -21,18 +22,23 @@ interface
   reg:TRegistryHelper;
 
   procedure imprimirCodBarrasSeguimientoOValidacion;
+
   public
+      ultimoTKImpreso:integer;
       nro_comprobdigital:Integer;
       imprimi: boolean;
+      ImprimiParteTK:boolean;
       nro_comprob:Integer;
-
+      function puedeImprimir:Boolean;
       procedure EstablecerEncabezadoTalonOS;
       procedure ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean); virtual; abstract;
       procedure copiaDigital;
       procedure imprimirFormaDePagoEnTicket;
-
-
+      procedure GuardarXML(const XML: TXMLDocument);
+      procedure setTKFiscal(nro_tk:string);
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
+      procedure verificarPapel;
+      destructor Destroy; override;
   end;
 implementation
   //--------------------  PROMO -----------------------------------------------------------------------//
@@ -78,10 +84,40 @@ begin
   formaDePago:= TFormaDePago.Create;
   formaDePago.cargarFormaPago(ticket);
   reg:= TRegistryHelper.Create;
-
-
+  ultimoTKImpreso:=0;
+    ImprimiParteTK :=false;
 
 end;
+
+destructor TBaseTicket.destroy;
+begin
+  fiscalEpson.Desconectar;
+  fiscalEpson.Free;
+
+end;
+
+procedure TBaseTicket.setTKFiscal(nro_tk: string);
+begin
+  ticket.numero_ticketfiscal:= strToInt(nro_tk);
+
+end;
+
+procedure TBaseTicket.verificarPapel;
+begin
+  if not fiscalEpson.tienePapel or not fiscalEpson.tieneLaTapaCerrada then
+  begin
+    fiscalEpson.Desconectar;
+    raise Exception.Create('El fiscal no tiene papel o esta la tapa abierta');
+  end;
+end;
+
+
+
+function TBaseTicket.puedeImprimir:Boolean;
+begin
+  Result:= fiscalEpson.tienePapel and fiscalEpson.tieneLaTapaCerrada
+end;
+
 procedure TBaseTicket.copiadigital;
 var
   archivoXML: TXMLDocument;
@@ -276,9 +312,13 @@ begin
         end;
 
 
-      archivoXML.SaveToFile(ticket.errores+ticket.fiscla_pv+(TUtils.rightpad(inttostr(nro_comprobdigital), '0', 8))+'.xml');
+       GuardarXML(archivoXML);
       end;
-    finally
+    except
+      on E:Exception do
+      begin
+
+      end;
 
 
     end;
@@ -287,7 +327,37 @@ begin
 
 end;
 
+procedure TBaseTicket.GuardarXML(const XML: TXMLDocument);
+var
+  Directorio: string;
+  fileName:string;
+begin
+  // Directorio donde se guardará el archivo XML
+  Directorio := 'C:\zetadigital';
+  fileName:=ticket.fiscla_pv+(TUtils.rightpad(inttostr(nro_comprobdigital), '0', 8))+'.xml';
+  // Verificar si el directorio existe, si no, crearlo
 
+  try
+    // Intentar guardar el archivo XML en el servidor
+    XML.SaveToFile(ticket.errores+filename);
+
+  except
+    on E: Exception do
+    begin
+      // En caso de error al guardar, intentar guardar en el directorio predeterminado
+      try
+        if not TDirectory.Exists(Directorio) then
+            TDirectory.CreateDirectory(Directorio);
+
+
+        XML.SaveToFile(Directorio+'\'+fileName); // Guardar en el directorio predeterminado
+
+      except
+
+      end;
+    end;
+  end;
+end;
 
 //----------------------------ENCABEZADO TALON OS-----------------------------//
 procedure TBaseTicket.EstablecerEncabezadoTalonOS;
@@ -381,7 +451,8 @@ var
   cant_caracteres:Integer;
 begin
 cant_caracteres:=13;
- nro_suc_pv:= ticket.sucursal +ticket.fiscla_pv;
+ nro_suc_pv:= TUtils.rightpad(ticket.sucursal,'0',3) + TUtils.rightpad(ticket.fiscla_pv,'0',2);
+
  barra_seguimiento:= nro_suc_pv +(TUtils.rightpad(inttostr(nro_comprob), '0', cant_caracteres - length(nro_suc_pv)));
  fiscalEpson.EscribirTextoLibre('Numero de seguimiento:');
  //fiscalEpson.EscribirTextoLibre(barra_seguimiento);

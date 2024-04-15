@@ -30,6 +30,7 @@ type
     procedure establecerPieTicketVale;
     procedure imprimirCorteDeTicket;
     procedure crearTicketVale;
+    procedure reimpresionTK;
 
   public
 
@@ -74,6 +75,7 @@ CODIGOIVA: string;
 ofecupon: string;
 numeroc: string;
     constructor Create(unTicket: TTicket; gridFacturador: TDBGRID);
+     destructor Destroy;override;
     procedure ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean); override;
   end;
 
@@ -88,6 +90,14 @@ begin
      gFacturador:= gridFacturador;
 
 end;
+
+destructor TTicketBEpson.Destroy;
+begin
+  inherited;
+end;
+
+
+
 
 procedure TTicketBEpson.establecerNombreVendedor;
 begin
@@ -574,63 +584,66 @@ procedure TTicketBEpson.ImprimirTicket(var imprimio: Boolean; var reimpresion:bo
 var
 tapaAbierta:Integer;
 begin
+    fiscalEpson.Conectar;
+    verificarPapel;
     error:= Fiscalepson.ConsultarNumeroComprobanteUltimo('82',@respuesta,2000);
 
      if not ((respuesta='') or (respuesta='Ninguno') ) then
       begin
-
-      nro_comprobdigital:=strtoint(respuesta)+1;
-      copiadigital;
-      //---------------------------borrado encabezados y cola-----------------------//
-      fiscalEpson.borrarEncabezadoYCola;
-      //-----------------------------------------------------------------------------//
-        establecerNombreVendedor;
-    EstablecerDireccionFiscalEnTicket;
-
-
-
-    // -----------------------------------------------------------------------------//
-    // --------------------------apertura de comprobante B---------------------------//
-
-   // error := fiscalEpson.abrircomprobante(2);
+        if not ImprimiParteTK then
+        begin
+          nro_comprobdigital:=strtoint(respuesta)+1;
+          copiadigital;
+          //---------------------------borrado encabezados y cola-----------------------//
+          fiscalEpson.borrarEncabezadoYCola;
+          //-----------------------------------------------------------------------------//
+          establecerNombreVendedor;
+          EstablecerDireccionFiscalEnTicket;
+          // -----------------------------------------------------------------------------//
+          // --------------------------apertura de comprobante B---------------------------//
+          // error := fiscalEpson.abrircomprobante(2);
 
 
-      {Corresponde al ticket fiscal}
-      cargarItemsEnTicket;
-      aplicarDescuentoGral;
-      EstablecerFormaPagoEnTicket;
-      finalizarTicket;
-      {Corresponde al ticket fiscal}
+          {Corresponde al ticket fiscal}
+          cargarItemsEnTicket;
+          aplicarDescuentoGral;
+          EstablecerFormaPagoEnTicket;
+          finalizarTicket;
+          {Corresponde al ticket fiscal}
 
-       respuesta:='';
-                 tipcomprob:='';
-                 texto:=strpcopy(tipcomprob,'82') ;
-                 error:= FiscalEpson.ConsultarNumeroComprobanteActual(@respuesta,2000);
-                 numeroc:=respuesta;
-                 imprimi:=true;
-                if not ((numeroc='') or (numeroc='Ninguno')) then
-                begin
+          respuesta:='';
+          tipcomprob:='';
+          texto:=strpcopy(tipcomprob,'82') ;
+          error:= FiscalEpson.ConsultarNumeroComprobanteActual(@respuesta,2000);
+          numeroc:=respuesta;
+          imprimi:=true;
+          if not ((numeroc='') or (numeroc='Ninguno')) then
+          begin
+            nro_comprob:=strtoint(respuesta);
+            respuesta:='';
+            ticket.fechafiscal:=(now);
+            ticket.numero_ticketfiscal:=nro_comprob;
+          end
+          else
+            imprimi:=False;
+          end;
+          error := FiscalEpson.CerrarComprobante();
+          ImprimiParteTK:=true;
+      end;
 
-                 nro_comprob:=strtoint(respuesta);
-                 respuesta:='';
 
 
-                 ticket.fechafiscal:=(now);
-                 ticket.numero_ticketfiscal:=nro_comprob;
-                 end
-                else
-                imprimi:=False;
-                end;
-                 error := FiscalEpson.CerrarComprobante();
      //-------------------borrado encabezado y cola------------------------------------------//
       fiscalEpson.borrarEncabezadoYCola;
-       //------------------------------------------------------------------------------------//
- comando:='';
- texto:=strpcopy(comando,'08F0|0001|082|'+inttostr(ticket.numero_ticketfiscal)) ;
- error:=fiscalEpson.enviarcomando(Comando);
- comando:='';
- texto:=strpcopy(comando,'08F6|0000') ;
- error:=fiscalEpson.enviarcomando(Comando);
+     //-------------------borrado encabezado y cola------------------------------------------//
+
+     if ImprimiParteTK and reimpresion then
+     begin
+        reimpresionTK;
+     end;
+      verificarPapel;
+      reimpresionTK;
+
 
 
     // ----------------------------talon obras sociales-------------------------------------//
@@ -640,7 +653,7 @@ begin
     begin
 
       error := fiscalEpson.cerrarComprobante();
-
+      verificarPapel;
       EstablecerEncabezadoTalonOS;
 
       iniciarTicketNoFiscal;
@@ -649,17 +662,15 @@ begin
 
       imprimirCodBarrasSeguimientoOValidacion;
 
-
-
       error := fiscalEpson.cerrarComprobante();
       z := 0;
-      if ticket.talon = 'S' then
+      if ticket.talon = 'S' then      {LLEVA COPIA DE TALON}
       BEGIN
         if ticket.codigo_OS <> '' then
         begin
 
           error := fiscalEpson.cerrarComprobante();
-
+          verificarPapel;
           EstablecerEncabezadoTalonOS;
 
           iniciarTicketNoFiscal;
@@ -677,6 +688,7 @@ begin
       if z >= 1 then
       begin
         error := fiscalEpson.cerrarComprobante();
+        verificarPapel;
         EstablecerEncabezadoTalonOS;
 
         iniciarTicketNoFiscal;
@@ -695,17 +707,33 @@ begin
     BEGIN
 
       error := fiscalEpson.cerrarComprobante();
-
+      verificarPapel;
       crearTicketVale;
       if ticket.vale = 'S' then
       BEGIN
+        verificarPapel;
         crearTicketVale;
 
       END;
 
     END;
 
+        // Aquí puedes manejar el valor de error y respuesta_estado según sea necesario
+        // Por ejemplo, mostrarlos en un MessageBox
+
     imprimi:=true;
+    fiscalEpson.Desconectar;
+end;
+
+procedure TTicketBEpson.reimpresionTK;
+begin
+  //------------------------------------------------------------------------------------//
+  comando := '';
+  texto := strpcopy(comando, '08F0|0001|082|' + inttostr(ticket.numero_ticketfiscal));
+  error := fiscalEpson.enviarcomando(Comando);
+  comando := '';
+  texto := strpcopy(comando, '08F6|0000');
+  error := fiscalEpson.enviarcomando(Comando);
 end;
 
 

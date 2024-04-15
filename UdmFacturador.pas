@@ -9,7 +9,7 @@ uses
   frxDBSet;
 
 Const
-  RegKey ='Software\Autofarma\APlus\';
+  RegKey ='Software\Autofarma\Impresor\';
 
 type
   TdmFacturador = class(TDataModule)

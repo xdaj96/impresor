@@ -1,0 +1,15 @@
+unit uPagoCheque;
+
+interface
+  type TPagoCheque = class
+    private
+    Fsucursal:string;
+    Ftip_comprobante:string;
+    Fnro_comprobante:string;
+    Fcod_banco:string;
+    Fnro_cheque:string;
+
+  end;
+implementation
+
+end.

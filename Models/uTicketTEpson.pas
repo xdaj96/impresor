@@ -1,27 +1,14 @@
 ﻿unit uTicketTEpson;
 
 interface
-    uses uBaseTicket,uFiscalEpson,udTicket,sysUtils,Vcl.DBGrids,uFormaDePago,FiscalPrinterLib_TLB,math,uUtils,dialogs;
+    uses uBaseTicket,uFiscalEpson,udTicket,sysUtils,Vcl.DBGrids,uFormaDePago,FiscalPrinterLib_TLB,math,uUtils,dialogs,forms;
     type
     TTicketTEpson= class(TBaseTicket)
     private
+    procedure ReimpresionTK;
 
 
-    procedure establecerNombreVendedor;
-    procedure EstablecerDireccionFiscalEnTicket;
-    procedure cargarItemsEnTicket;
-    procedure EstablecerFormaPagoEnTicket;
-    procedure RealizarPago(const imp: string; const tipoPago: Integer; const comandos: string);
-    procedure aplicarDescuentoGral;
-    procedure finalizarTicket;
-    procedure iniciarTicketNoFiscal;
-    procedure imprimirItemsTalonOS;
-    procedure imprimirItemsVale;
-    procedure establecerEncabezadoVale;
-    procedure establecerEncabezadoTicketVale;
-    procedure establecerPieTicketVale;
-    procedure imprimirCorteDeTicket;
-    procedure crearTicketVale;
+
 
 
     public
@@ -51,15 +38,34 @@ interface
     ofecupon: string;
     fatal:integer;
     numeroc:string;
-
+    tieneImpresoParteTicket:boolean;
     Gfacturador: TDBGrid;
     formaDePago:TFormaDePago;
 
 
     error:LongInt;
 
+
       constructor Create(unTicket:TTicket;gridFacturador:TDBGrid);
+      destructor Destroy;override;
       procedure ImprimirTicket(var imprimio: Boolean;var reimpresion:boolean); override;
+        procedure establecerNombreVendedor;
+    procedure EstablecerDireccionFiscalEnTicket;
+    procedure cargarItemsEnTicket;
+    procedure EstablecerFormaPagoEnTicket;
+    procedure RealizarPago(const imp: string; const tipoPago: Integer; const comandos: string);
+    procedure aplicarDescuentoGral;
+    procedure finalizarTicket;
+    procedure iniciarTicketNoFiscal;
+    procedure imprimirItemsTalonOS;
+    procedure imprimirItemsVale;
+    procedure establecerEncabezadoVale;
+    procedure establecerEncabezadoTicketVale;
+    procedure establecerPieTicketVale;
+    procedure imprimirCorteDeTicket;
+    procedure crearTicketVale;
+
+
       {procedure imprimirFormaDePagoEnTicket; }
     end;
 
@@ -76,7 +82,10 @@ begin
 end;
 
 
-
+destructor TTicketTEpson.Destroy;
+begin
+  inherited;
+end;
 
 
 
@@ -102,6 +111,7 @@ begin
     ticket.afiliado_nombre);
   error := fiscalEpson.ImprimirTextoLibre(comando);
   texto := strpcopy(comando, 'Fecha: ' + (datetostr(now)));
+  Application.ProcessMessages;
 
 end;
 
@@ -170,6 +180,7 @@ begin
    texto := strpcopy(comando, 'Emision VR' + ticket.fiscla_pv + ': ' +
      ticket.fiscla_pv + (TUtils.rightpad(inttostr(nro_comprob), '0', 8)));
    error := fiscalEpson.ImprimirTextoLibre(comando);
+   Application.ProcessMessages;
 
 
 end;
@@ -183,6 +194,7 @@ begin
   comando:='';
   texto:=strpcopy(comando,'REF. CPBT. '+ticket.fiscla_pv+(TUtils.rightpad(inttostr(nro_comprob), '0', 8))) ;
   error :=fiscalEpson.ImprimirTextoLibre(comando);
+ Application.ProcessMessages;
 
 end;
 
@@ -192,6 +204,7 @@ begin
      comando:='';
      texto:=strpcopy(comando,'-----CORTAR-------------CORTAR------------CORTAR------------CORTAR------------️') ;
      error :=fiscalEpson.ImprimirTextoLibre(comando);
+     Application.ProcessMessages;
 
 end;
 
@@ -209,6 +222,7 @@ begin
   comando:='';
   texto:=strpcopy(comando,'--------------------------------------------------') ;
   error :=fiscalEpson.ImprimirTextoLibre(comando);
+  Application.ProcessMessages;
 
 end;
 
@@ -233,6 +247,7 @@ begin
 
       Gfacturador.DataSource.DataSet.Next;
   end;
+  Application.ProcessMessages;
 
 end;
 
@@ -271,6 +286,7 @@ begin
     imprimi := False;
   end;
    error:= fiscalEpson.cerrarComprobante();
+  Application.ProcessMessages;
 
  end;
 
@@ -381,6 +397,7 @@ begin
     END;
     Gfacturador.DataSource.DataSet.Next;
   end;
+  Application.ProcessMessages;
 
 end;
 
@@ -448,6 +465,8 @@ begin
     error := fiscalEpson.ImprimirItem(200, comando, cantidadep, precioep, valorivaep, 0, (''), 1, alfabetaep, (''), 7);
     Gfacturador.DataSource.DataSet.Next;
   end;
+  Application.ProcessMessages;
+
 end;
 
 
@@ -465,7 +484,21 @@ begin
     establecerPieTicketVale;
     comando:='';
     error := fiscalEpson.CerrarComprobante();
+   Application.ProcessMessages;
 
+end;
+
+
+
+procedure TTicketTEpson.ReimpresionTK;
+begin
+  // ------------------------------------------------------------------------------------//
+  comando := '';
+  texto := strpcopy(comando, '08F0|0001|083|' + inttostr(ticket.numero_ticketfiscal));
+  error := fiscalEpson.enviarcomando(comando);
+  comando := '';
+  texto := strpcopy(comando, '08F6|0000');
+  error := fiscalEpson.enviarcomando(comando);
 end;
 
 
@@ -510,54 +543,51 @@ begin
 
 
 
-
+  fiscalEpson.Conectar;
   error := fiscalEpson.ConsultarNumeroComprobanteUltimo('83', @respuesta, 2000);
+
   if not((respuesta = '') or (respuesta = 'Ninguno')) then
   begin
-    nro_comprobdigital := strtoint(respuesta);
+    verificarPapel;
+      if not ImprimiParteTK then
+      begin
+       nro_comprobdigital := strtoint(respuesta);
+       nro_comprobdigital := nro_comprobdigital +1;
+       copiadigital;
+       // ---------------------------borrado encabezados y cola-----------------------//
+       fiscalEpson.borrarEncabezadoYCola;
+       comando := '';
+       establecerNombreVendedor;
+       EstablecerDireccionFiscalEnTicket;
+     // -----------------------------------------------------------------------------//
+     // --------------------------apertura de comprobante C---------------------------//
+      error := fiscalEpson.abrircomprobante(2);
+      // -----------------------------CARGA DE ITEMS------------------------------------//
+      cargarItemsEnTicket;
+      // -----------------------------CARGA DE ITEMS------------------------------------//
 
-     nro_comprobdigital := nro_comprobdigital +1;
+      // ----------------------------descuento general---------------------------------//
+      aplicarDescuentoGral;
+      // ----------------------------descuento general---------------------------------//
 
-    // copiadigital;
-    // ---------------------------borrado encabezados y cola-----------------------//
-    fiscalEpson.borrarEncabezadoYCola;
-    comando := '';
-    establecerNombreVendedor;
-    EstablecerDireccionFiscalEnTicket;
-
-
-
-
-
-    // -----------------------------------------------------------------------------//
-    // --------------------------apertura de comprobante C---------------------------//
-
-    error := fiscalEpson.abrircomprobante(2);
-    // -----------------------------CARGA DE ITEMS------------------------------------//
-    cargarItemsEnTicket;
-    // -----------------------------CARGA DE ITEMS------------------------------------//
-
-    // ----------------------------descuento general---------------------------------//
-    aplicarDescuentoGral;
-    // ----------------------------descuento general---------------------------------//
-
-    // ----------------------------PAGOS-----------------------------------------------//
-    EstablecerFormaPagoEnTicket;
-    // ----------------------------PAGOS-----------------------------------------------//
-    // ----------------------------CERRAR TK-----------------------------------------------//
-    finalizarTicket;
-    // ----------------------------CERRAR TK-----------------------------------------------//
+      // ----------------------------PAGOS-----------------------------------------------//
+       EstablecerFormaPagoEnTicket;
+      // ----------------------------PAGOS-----------------------------------------------//
+      // ----------------------------CERRAR TK-----------------------------------------------//
+        finalizarTicket;
+      // ----------------------------CERRAR TK-----------------------------------------------//
+       ImprimiParteTK:= true;
+     end;
 
     // -------------------borrado encabezado y cola------------------------------------------//
     fiscalEpson.borrarEncabezadoYCola;
-    // ------------------------------------------------------------------------------------//
-    comando := '';
-    texto := strpcopy(comando, '08F0|0001|083|' +
-      inttostr(ticket.numero_ticketfiscal));
-    error := fiscalEpson.enviarcomando(comando);
-    comando := '';
-    texto := strpcopy(comando, '08F6|0000');
-    error := fiscalEpson.enviarcomando(comando);
+    sleep(5000);
+    verificarPapel;
+
+    if ImprimiParteTK and reimpresion then
+       ReimpresionTK;
+
+    ReimpresionTK; {Respaldo de caja o de obra social}
 
 
 
@@ -569,7 +599,7 @@ begin
     begin
 
       error := fiscalEpson.cerrarComprobante();
-
+      verificarPapel;
       EstablecerEncabezadoTalonOS;
 
       iniciarTicketNoFiscal;
@@ -578,17 +608,15 @@ begin
 
       imprimirCodBarrasSeguimientoOValidacion;
 
-
-
       error := fiscalEpson.cerrarComprobante();
       z := 0;
-      if ticket.talon = 'S' then
+      if ticket.talon = 'S' then      {LLEVA COPIA DE TALON}
       BEGIN
         if ticket.codigo_OS <> '' then
         begin
 
           error := fiscalEpson.cerrarComprobante();
-
+          verificarPapel;
           EstablecerEncabezadoTalonOS;
 
           iniciarTicketNoFiscal;
@@ -606,6 +634,7 @@ begin
       if z >= 1 then
       begin
         error := fiscalEpson.cerrarComprobante();
+        verificarPapel;
         EstablecerEncabezadoTalonOS;
 
         iniciarTicketNoFiscal;
@@ -624,25 +653,28 @@ begin
     BEGIN
 
       error := fiscalEpson.cerrarComprobante();
-
+      verificarPapel;
       crearTicketVale;
       if ticket.vale = 'S' then
       BEGIN
+        verificarPapel;
         crearTicketVale;
 
       END;
 
     END;
 
+    Application.ProcessMessages;
 
 
         // Aquí puedes manejar el valor de error y respuesta_estado según sea necesario
         // Por ejemplo, mostrarlos en un MessageBox
 
     imprimi:=true;
-
+    fiscalEpson.Desconectar;
   end;
 end;
+
        {
 procedure TTicketTEpson.imprimirFormaDePagoEnTicket;
 begin

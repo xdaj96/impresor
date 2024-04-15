@@ -6,9 +6,9 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls, registry,
   Vcl.Grids, Vcl.ValEdit, Vcl.StdCtrls, Vcl.Buttons, Vcl.DBGrids, Vcl.FileCtrl,
-  Data.DB, Datasnap.DBClient,  Xml.xmldom, Xml.XMLIntf,
+  Data.DB, Datasnap.DBClient,  Xml.xmldom, Xml.XMLIntf,uPagoChequeService, uUtils,
   msxmldom, xml.xmldoc, udticket, Vcl.OleCtrls, FiscalPrinterLib_TLB, system.Win.ComObj, math,
-  Vcl.Menus, Vcl.AppEvnts,uBaseTicket,uTicketTEpson,uTicketBEpson; //uadicionales;
+  Vcl.Menus, Vcl.AppEvnts,uBaseTicket,uTicketTEpson,uTicketBEpson,uTicketAEpson,ufBuscarTK; //uadicionales;
 const
 
   RegKey ='Software\Autofarma\impresor\';
@@ -66,10 +66,11 @@ type
     Gfacturador: TDBGrid;
     Label1: TLabel;
     cdsdetallecan_vale: TStringField;
-    Button3: TButton;
-    Button2: TButton;
     Bimprimire: TBitBtn;
     VLparametros: TValueListEditor;
+    Button2: TButton;
+    Button3: TButton;
+    btnReimprimir: TBitBtn;
     procedure BguardarClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure binsertarClick(Sender: TObject);
@@ -86,6 +87,8 @@ type
     procedure BimprimireClick(Sender: TObject);
     procedure ImprimirTicketAepson(var  Imprimio:boolean);
     procedure copiadigital;
+    procedure Button1Click(Sender: TObject);
+    procedure btnReimprimirClick(Sender: TObject);
   private
    Ticket:TTicket;
       imp_efectivo: string;
@@ -101,10 +104,15 @@ type
     impresion: string;
     ticketImprimir:TBaseTicket;
     reimpresion:boolean;
+     nIntentos:integer;
+    ultTipComprob:string;
+    archivo: string;
+    procedure crearComprobanteImpresion;
+
 
   public
     procedure SetTicket(unTicket:TTicket);
-
+    procedure mostrarVentanaPrimerPlano;
   end;
 
 var
@@ -120,6 +128,47 @@ implementation
 {$R *.dfm}
 
 uses UdmFacturador;
+
+procedure Tfimpresor.mostrarVentanaPrimerPlano;
+var
+  hwndApp: THandle;
+begin
+  // Reemplaza 'NombreDeTuAplicacion' con el título de la ventana de tu aplicación
+  hwndApp := FindWindow(nil, 'impresor');
+
+
+  if IsWindow(hwndApp) then
+  begin
+    // Muestra la ventana si está minimizada
+    ShowWindow(hwndApp, SW_RESTORE);
+
+    // Pone la ventana al primer plano
+    SetWindowPos(hwndApp, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE or SWP_NOSIZE);
+  end
+  else
+  begin
+    ShowMessage('La aplicación no se encontró.');
+  end;
+end;
+
+procedure Tfimpresor.crearComprobanteImpresion;
+begin
+  if ticketImprimir = nil then
+  begin
+  if ticket.tip_comprobante = 'A' then
+    ticketImprimir := TTicketAEpson.Create(ticket, GFacturador);
+  {Ticket Factura B}
+  if ticket.tip_comprobante = 'B' then
+    ticketImprimir := TTicketBEpson.Create(ticket, GFacturador);
+  {Ticket T}
+  if ticket.tip_comprobante = 'T' then
+    ticketImprimir := TTicketTEpson.Create(ticket, GFacturador);
+  end;
+
+end;
+
+
+
 function LeftPad(S: string; Ch: Char; Len: Integer): string;
 var
   RestLen: Integer;
@@ -278,23 +327,26 @@ unaTasaIVA:TTasaIVA;
  importeGravado, importeNeto:double;
    importeNetodesc, importeGravadodesc: double;
    key: word;
-   archivo: string;
+
    reg: tregistry;
    pathimpresion: wchar;
    patherror: wchar;
+
 //   form3: tfadicionales;
 begin
 
 //  Reg := TRegistry.Create(KEY_WRITE);
 //  Reg.RootKey := HKEY_CURRENT_USER;
-
+ contador.Enabled:=false;
+ btnReimprimir.Enabled:= false;
+ sleep(1000);
 for I := 0 to flist.Items.Count -1 do
     begin
     Reg := TRegistry.Create;
     Reg.RootKey := HKEY_CURRENT_USER;
     Reg.OpenKey(regKey,true);
     dmFacturador.AbrirConexion();
-    contador.Enabled:=false;
+
 
                 blimpiartodo.Click;
                 archivo:=flist.Items[i];
@@ -569,7 +621,16 @@ for I := 0 to flist.Items.Count -1 do
   end;
 
   //-------------------------tablas ivas-------------------------------//
-  reimpresion:= False;
+   if TUtils.contienePalabra('_reimpresion',archivo)  then
+   begin
+      reimpresion:=true;
+   end
+   else
+   begin
+      reimpresion:= False;
+   end;
+
+
 
   if ticket.fiscal='H' then
   BEGIN
@@ -579,8 +640,7 @@ for I := 0 to flist.Items.Count -1 do
   begin
     bimprimire.Click;
   end;
-  if imprimi<>false then
-  begin
+
      delete(ticket.comprobante,length(ticket.comprobante)-0,1);
      ticket.comprobante:=ticket.comprobante+REG.ReadString('PV');
      ticket.fiscla_pv:=Reg.ReadString('pf');
@@ -595,17 +655,37 @@ for I := 0 to flist.Items.Count -1 do
        ticket.nombre_cos2:='';
 
      end;
+     try
+      try
+        if not TUtils.contienePalabra('_reimpresion',archivo)  then
+        begin
+          Insertarcomprobante;
+        end;
 
-     Insertarcomprobante;
-//     CopyFile(pchar(path+archivo), pchar(path+'\copia\'+ticket.nroticketadicional+'.xml'), false);
-     CopyFile(pchar(path+archivo), pchar(ticket.errores+ticket.nroticketadicional+'.xml'), false);
+       except
+       on E:Exception do
+       begin
+         mticket.Lines.Add(E.message);
+       end;
+      end;
+     finally
+        begin
+         //CopyFile(pchar(path+archivo), pchar(path+'\copia\'+ticket.nroticketadicional+'.xml'), false);
+         if not TUtils.contienePalabra('_reimpresion',archivo)  then
+        begin
+            CopyFile(pchar(path+archivo), pchar(ticket.errores+ticket.nroticketadicional+'.xml'), false);
+        end;
+         deletefile(path+archivo);
+         //blimpiartodo.Click;
+         dmFacturador.CerrarConexion();
 
-     deletefile(path+archivo);
-     blimpiartodo.Click;
+      end;
 
 
-     dmFacturador.CerrarConexion();
-  end
+     end;
+
+
+
 
 
 
@@ -614,9 +694,9 @@ for I := 0 to flist.Items.Count -1 do
 
 
  end;
-  // blimpiartodo.Click;
+  blimpiartodo.Click;
    flist.Update;
-
+   btnReimprimir.Enabled:= true;
    contador.Enabled:=true;
 end;
 
@@ -1666,48 +1746,50 @@ end;
 procedure Tfimpresor.BimprimireClick(Sender: TObject);
 var
 impresion_ok: boolean;
-
+nro_tk:string;
 begin
-impresion_ok:= False;
-
 
 try
+    impresion_ok:= False;
+  crearComprobanteImpresion;
 
-if ticket.tip_comprobante='A' then
-           BEGIN
-              ImprimirTicketAepson(impresion_ok);
-              exit;
-           END;
+  if  TUtils.contienePalabra('_reimpresion',archivo)  then
+  begin
+      ticketImprimir.imprimiParteTK:=true;
+      nro_tk:=StringReplace(archivo, Ticket.fiscla_pv, '', [rfReplaceAll, rfIgnoreCase]);
+      nro_tk:=StringReplace(nro_tk,'_reimpresion.xml', '', [rfReplaceAll, rfIgnoreCase]);
+      ticketImprimir.setTKFiscal(nro_tk);
+      ticketImprimir.nro_comprob:= strToInt(nro_tk);
+      ticketImprimir.nro_comprobdigital:= strToInt(nro_tk);
 
-{Ticket Factura B}
-if ticket.tip_comprobante='B' then
-              ticketImprimir:= TTicketBEpson.Create(ticket,GFacturador);
+  end;
 
-{Ticket T}
-if ticket.tip_comprobante='T' then
-    ticketImprimir:= TTicketTEpson.Create(ticket,GFacturador);
 
 ticketImprimir.ImprimirTicket(impresion_ok,reimpresion);
 
-if not impresion_ok then
-begin
-  reimpresion:= True;
-end;
 
 
  nro_comprob:= ticketImprimir.nro_comprob;
 nro_comprobdigital:= ticketImprimir.nro_comprobdigital;
 
 imprimi:= ticketImprimir.imprimi;
+ticketImprimir.Free;
+ticketImprimir:= nil;
 
-except 
+except
   on E: Exception do
   begin
     // Capturar y mostrar información sobre la excepción
-    ShowMessage(E.Message);
-    reimpresion:= True;
+    fImpresor.WindowState := wsNormal;
+    fImpresor.Show;
+    reimpresion:=true;
+     //mostrarVentanaPrimerPlano;
+    mticket.lines.Add(E.Message);
+    application.ProcessMessages;
+    Sleep(3000);
     bimprimirE.click;
   end;
+
 
 end;
  end;
@@ -1726,6 +1808,42 @@ limpiarunidadticket;
 
 end;
 
+
+procedure Tfimpresor.btnReimprimirClick(Sender: TObject);
+var
+  fBuscarTK:TfBuscarTK;
+begin
+    contador.Enabled:= false;
+    if ticket.fiscal <> 'E' then
+    begin
+        ShowMessage('Funcionalidad habilitada solo en fiscales EPSON');
+        exit;
+    end;
+
+    fBuscarTK:= TfBuscarTK.Create(SELF);
+    fBuscarTK.setTicket(ticket);
+    fBuscarTK.ShowModal;
+
+    if not (fBuscarTK.rutaTicket = '') then
+    begin
+     CopyFile(pchar(fBuscarTK.rutaTicket), pchar(ticket.cola+fBuscarTK.archivo+'_reimpresion.xml'), false);
+     sleep(3000);
+    end;
+
+
+
+    contador.Enabled:= true;
+
+
+end;
+
+procedure Tfimpresor.Button1Click(Sender: TObject);
+var
+fiscal:TTicketAEpson;
+begin
+ fiscal:= TTicketAEpson.Create(ticket,gFacturador);
+ fiscal.reimpresionTK;
+end;
 
 procedure Tfimpresor.Button2Click(Sender: TObject);
 TYPE
@@ -2632,6 +2750,7 @@ reg: tregistry;
   ip3: STRING;
 
 begin
+ nIntentos:= 0; // Intentos de impresion si son 3 borra el archivo y lo pasa a errores
  // Ticket:=TTicket.Create;
 //  pINICIO.ActivePageIndex:=0;
 Reg := TRegistry.Create;
@@ -3006,9 +3125,10 @@ begin
   error:= ConsultarNumeroComprobanteUltimo('81',@respuesta,2000);
  if not ((respuesta='') or (respuesta='Ninguno') ) then
       begin
-
+         ShowMessage('TICKET A!');
          nro_comprobdigital:=strtoint(respuesta)+1;
          copiadigital;
+         //abrircomprobante(2);
       //---------------------------borrado encabezados y cola-----------------------//
         comando:='';
 
@@ -3110,78 +3230,6 @@ begin
 
 //-------------------------------------------------------------------------------//
 //-----------------------------CARGA DE ITEMS------------------------------------//
-Gfacturador.DataSource.DataSet.First;
-while not Gfacturador.DataSource.DataSet.Eof do
-          begin
-                if not (Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[11].FieldName).asstring='0') then
-                begin
-                comando:='';
-                texto:=strpcopy(comando,ticket.codigo_OS +': '+(Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[14].FieldName).asstring+' ('+(formatfloat('#####', Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[11].FieldName).asfloat))+'%)')) ;
-                error:= CargarTextoExtra( comando )
-                end;
-                if not (Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[12].FieldName).asstring='0') then
-                begin
-                comando:='';
-                texto:=strpcopy(comando,ticket.codigo_Co1 +': '+(Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[20].FieldName).asstring+' ('+(formatfloat('#####', Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[12].FieldName).asfloat))+'%)')) ;
-                error:= CargarTextoExtra( comando )
-                end;
-                if not (Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[13].FieldName).asstring='0') then
-                begin
-                comando:='';
-                texto:=strpcopy(comando,ticket.codigo_CoS2 +': '+(Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[27].FieldName).asstring+' ('+(formatfloat('#####', Gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[13].FieldName).asfloat))+'%)')) ;
-                error:= CargarTextoExtra( comando )
-                end;
-                if NOT ((TICKET.sucursal='202') OR (TICKET.sucursal='203') OR (TICKET.sucursal='221')) then
-                BEGIN
-                  if gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[10].FieldName).asstring='B' then
-                  begin
-                    valorivaep:=5;
-                  end;
-                END;
-                if ((TICKET.sucursal='202') OR (TICKET.sucursal='203') OR (TICKET.sucursal='221')) then
-                BEGIN
-                  if gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[10].FieldName).asstring='B' then
-                  begin
-                    valorivaep:=1;
-                  end;
-                END;
-                if gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[10].FieldName).asstring='A' then
-                begin
-                  valorivaep:=1;
-                end;
-
-                descripcion:=(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[1].FieldName).asstring);
-
-                if (gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[18].FieldName).asstring)<>'0' then
-                BEGIN
-                descripcion:='('+(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[18].FieldName).asstring)+')'+descripcion;
-                END;
-
-           descripcioncortada:=copy(descripcion, 0, 20);
-           comando:='';
-           texto:=strpcopy(comando,descripcioncortada) ;
-
-           texto:=strpcopy(cantidadep,(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[3].FieldName).asstring)) ;
-
-
-           if valorivaep=5 then
-             begin
-             texto:=strpcopy(precioep,floattostr(((gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[2].FieldName).asfloat)*ticket.coeficientetarjeta)/1.21)) ;
-
-             end;
-
-
-           if valorivaep=1 then
-           begin
-           texto:=strpcopy(precioep,floattostr(((gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[2].FieldName).asfloat)*ticket.coeficientetarjeta))) ;
-           end;
-
-           texto:=strpcopy(alfabetaep,(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[0].FieldName).asstring)) ;
-
-           error:=ImprimirItem(200,comando,cantidadep,precioep,valorivaep,0,(''),1,alfabetaep,(''),7);
-
-           Gfacturador.DataSource.DataSet.Next;
-          end;
 //-----------------------------CARGA DE ITEMS------------------------------------//
   //--------------------------descuento general----------------------------------//
         Gfacturador.DataSource.DataSet.First;
@@ -3774,6 +3822,9 @@ iva: double;
 
  stockparcial: integer;
  conteo:integer;
+
+ pagoCheque:TPagoChequeService;
+
 begin
 
 
@@ -4014,7 +4065,7 @@ begin
                                                         ':IMP_GENTILEZA,                                 ',
                                                         ':modificado,                                          ',
                                                         'NULL,                                           ',
-                                                        '0,                                              ',
+                                                        ':cantvale,                                      ',
                                                         'NULL,                                           ',
                                                         'NULL,                                           ',
                                                         ''''');');
@@ -4034,7 +4085,7 @@ while not Gfacturador.DataSource.DataSet.Eof do
      dmfacturador.icomprobante.parambyname('nom_producto').asstring:=Gfacturador.Fields[1].AsString;
      dmfacturador.icomprobante.parambyname('cantidad').asinteger:=Gfacturador.Fields[3].Asinteger;
      dmfacturador.icomprobante.parambyname('imp_unitario').asfloat:=Gfacturador.Fields[2].asfloat*ticket.coeficientetarjeta;
-
+     dmfacturador.icomprobante.parambyname('cantvale').asInteger:= Gfacturador.Fields[18].AsInteger;
      //----------cuando tiene obra social o coseguro cambia el campo del iva--------------------///
   if not ((ticket.codigo_OS<>'') or (ticket.codigo_Co1<>'') or (ticket.codigo_Cos2<>''))  then
   begin
@@ -4177,31 +4228,9 @@ Begin
 
 if TICKET.cheque<>0 then
 begin
-     if dmfacturador.ticomprobante.InTransaction  then
-    dmfacturador.ticomprobante.Rollback;
-
-    dmfacturador.ticomprobante.StartTransaction;
-    dmfacturador.icomprobante.Database:=dmFacturador.getConexion;
-
-    dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
-    dmfacturador.icomprobante.Close;
-    dmfacturador.icomprobante.SQL.Clear;
-
-
-    dmfacturador.icomprobante.Close;
-    dmfacturador.icomprobante.SQL.Text:=concat(' INSERT INTO VTTBPAGOCHEQUE (NRO_SUCURSAL, TIP_COMPROBANTE, NRO_COMPROBANTE, COD_BANCO, COD_CTA, NRO_CHEQUE, IMP_CHEQUE) VALUES (:sucursal,:tip_comprobante, :nro_comprobante, :cod_banco, '''', :nro_cheque, :importe_cheque);');
-
-
-
-    dmfacturador.icomprobante.ParamByName('SUCURSAL').AsString:=ticket.sucursal;
-    dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=TICKET.comprobante;
-    dmfacturador.icomprobante.ParamByName('nro_comprobante').AsString:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
-    dmfacturador.icomprobante.ParamByName('cod_banco').AsString:=ticket.codigocheque;
-    dmfacturador.icomprobante.ParamByName('nro_cheque').AsString:=ticket.numerocheque;
-    dmfacturador.icomprobante.ParamByName('importe_cheque').AsFloat:=TICKET.cheque;
-    dmfacturador.icomprobante.Open;
-    dmfacturador.ticomprobante.Commit;
-
+    pagoCheque:= TpagoChequeService.Create;
+    pagoCheque.procesarPagoCheque(ticket,nro_comprob);
+    pagoCheque.Free;
 end;
 
 //INSTERTAR VTTPAGOCTACTE

@@ -1,0 +1,30 @@
+unit uPagoChequeService;
+
+interface
+  uses uPagoChequeDAO,UdTicket;
+
+ type TPagoChequeService = class
+ private
+    pagoChequeDao:TPagoChequeDAO;
+ public
+    procedure procesarPagoCheque(ticket:TTicket);
+    constructor Create;
+    destructor Destroy;
+ end;
+implementation
+
+    constructor TPagoChequeService.Create;
+    begin
+         pagoChequeDAO:= TPagoChequeDAO.Create;
+    end;
+
+    destructor TPagoChequeService.Destroy;
+    begin
+         pagoChequeDAO.Free;
+    end;
+
+    procedure TPagoChequeService.procesarPagoCheque(ticket:TTicket);
+    begin
+
+    end;
+end.

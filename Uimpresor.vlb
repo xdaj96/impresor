@@ -68,9 +68,6 @@ Coordinates=558,551,122,36
 [cdsdetalleCOD_IVA]
 Coordinates=558,606,129,36
 
-[Button2]
-Coordinates=244,10,59,58
-
 [cdsdetalletamano]
 Coordinates=558,661,115,36
 
@@ -149,9 +146,6 @@ Coordinates=816,276,184,36
 [cdsdetallenetoxcobrar]
 Coordinates=816,331,141,36
 
-[Button3]
-Coordinates=634,10,59,58
-
 [cdsdetalleNRO_TROQUEL]
 Coordinates=816,386,170,36
 
@@ -165,5 +159,5 @@ Coordinates=391,10,64,58
 Coordinates=816,441,212,36
 
 []
-Coordinates=816,496,91,36
+Coordinates=634,10,59,58
 

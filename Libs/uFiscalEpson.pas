@@ -96,7 +96,7 @@ interface
   posEncabezado:Integer;
   respuesta_estado:LongInt;
   constructor Create;
-  destructor destroy;
+  destructor Destroy;
 
   function cerrarComprobante():LongInt;
   function tienePapel():boolean;
@@ -307,7 +307,7 @@ destructor TFiscalEpson.destroy;
 begin
   error := Desconectar();
   FreeLibrary(dll);
-
+  inherited;
 end;
 
 
@@ -315,7 +315,7 @@ end;
 
  begin
    error := ConsultarEstado(7001, respuesta_estado);
-   Result:= respuesta_estado=0;
+   Result:= respuesta_estado < 2;
  end;
 
  function TFiscalEpson.tieneLaTapaCerrada:Boolean;
@@ -330,10 +330,7 @@ end;
 
  function TFiscalEpson.cerrarComprobante;
  begin
-    if not tienePapel or not tieneLaTapaCerrada then
-    begin
-      raise Exception.Create('El fiscal no tiene papel o esta la tapa abierta');
-    end;
+    
     Result:=CerrarComprob;
 
  end;
@@ -604,6 +601,10 @@ comando:Array[0..200] of ansichar;
 begin
   comando:= '';
   texto := strpcopy(comando, texto);
+
+
+
+
   error := ImprimirTextoLibre(comando);
 
 end;

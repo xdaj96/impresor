@@ -1,0 +1,16 @@
+unit uPagoChequeDAO;
+
+interface
+  uses udmFacturador,IBX.IBQUERY,uPagoCheque;
+  type TPagoChequeDAO = class
+     private
+
+     public
+     procedure iniciarTransaccion;
+     procedure insertarPago(sucursal:string;tip_comprobante:string;nro_comprobante:string;)
+     procedure commit;
+
+  end;
+implementation
+
+end.
