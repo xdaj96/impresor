@@ -102,8 +102,8 @@ object fimpresor: Tfimpresor
         OnClick = binsertarClick
       end
       object Blimpiartodo: TBitBtn
-        Left = 289
-        Top = 461
+        Left = 329
+        Top = 254
         Width = 109
         Height = 25
         Caption = 'Limpiar (F2)'
@@ -669,7 +669,7 @@ object fimpresor: Tfimpresor
         OnClick = BimprimireClick
       end
       object Button2: TButton
-        Left = 199
+        Left = 215
         Top = 461
         Width = 84
         Height = 25
@@ -685,7 +685,7 @@ object fimpresor: Tfimpresor
         OnClick = Button2Click
       end
       object Button3: TButton
-        Left = 109
+        Left = 135
         Top = 461
         Width = 84
         Height = 25
@@ -704,7 +704,7 @@ object fimpresor: Tfimpresor
       object btnReimprimir: TBitBtn
         Left = 1
         Top = 461
-        Width = 109
+        Width = 136
         Height = 25
         Caption = 'Reimprimir'
         Font.Charset = DEFAULT_CHARSET

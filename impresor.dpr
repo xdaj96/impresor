@@ -1,5 +1,7 @@
 program impresor;
 
+
+
 uses
   Vcl.Forms,
   Uimpresor in 'Uimpresor.pas' {fimpresor},
@@ -19,7 +21,8 @@ uses
   uPagoChequeDAO in 'DAO\uPagoChequeDAO.pas',
   uPagoCheque in 'Models\uPagoCheque.pas',
   uPagoChequeService in 'Services\uPagoChequeService.pas',
-  uTicketAEpson in 'Models\uTicketAEpson.pas';
+  uTicketAEpson in 'Models\uTicketAEpson.pas',
+  ufBuscarTK in 'Vistas\ufBuscarTK.pas';
 
 {$R *.res}
 
