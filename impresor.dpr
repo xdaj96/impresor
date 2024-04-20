@@ -22,7 +22,10 @@ uses
   uPagoCheque in 'Models\uPagoCheque.pas',
   uPagoChequeService in 'Services\uPagoChequeService.pas',
   uTicketAEpson in 'Models\uTicketAEpson.pas',
-  ufBuscarTK in 'Vistas\ufBuscarTK.pas';
+  ufBuscarTK in 'Vistas\ufBuscarTK.pas',
+  uPagoCtaCteDAO in 'DAO\uPagoCtaCteDAO.pas',
+  uFPagoCte in 'Models\uFPagoCte.pas',
+  uPagoCtaCteService in 'Services\uPagoCtaCteService.pas';
 
 {$R *.res}
 

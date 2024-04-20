@@ -1,0 +1,15 @@
+unit uPagoCtaCteDAO;
+
+interface
+  uses uFPagoCTE,sysUtils,udmFacturador;
+  type TFPagoCuentaCteDAO = class
+    private
+
+    public
+      procedure iniciarTransaccion;
+      procedure commit;
+      procedure insertar(comprobPagoCtaCte:uFPagoCTE);
+  end;
+implementation
+
+end.

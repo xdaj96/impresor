@@ -1,0 +1,33 @@
+unit uPagoCtaCteDAO;
+
+interface
+  uses uFPagoCTE,sysUtils,udmFacturador;
+  type TFPagoCuentaCteDAO = class
+    private
+
+    public
+      procedure iniciarTransaccion;
+      procedure commit;
+      procedure insertar(formaPago:uFPagoCTE);
+  end;
+implementation
+
+  procedure TFPagoCuentaCteDAO.iniciarTransaccion;
+  begin
+     if dmfacturador.ticomprobante.InTransaction  then
+        dmfacturador.ticomprobante.Rollback;
+     dmfacturador.ticomprobante.StartTransaction;
+     dmfacturador.icomprobante.Database:=dmFacturador.getConexion;
+     dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
+     dmfacturador.icomprobante.Close;
+     dmfacturador.icomprobante.SQL.Clear;
+  end;
+
+  procedure TFPagoCuentaCteDAO.commit;
+  begin
+    dmfacturador.icomprobante.Open;
+    dmfacturador.ticomprobante.Commit;
+  end;
+
+
+end.

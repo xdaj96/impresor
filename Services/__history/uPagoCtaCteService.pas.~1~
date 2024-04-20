@@ -1,0 +1,41 @@
+unit uPagoCtaCteService;
+
+interface
+  uses sysUtils,uPagoCtaCteDAO,uFPagoCTE;
+
+ type TFormaPagoCtaCteService = class
+  private
+    pagoCtaCteDAO:TFPagoCuentaCteDAO;
+  public
+    procedure registrarFormaPago(formaPago:TFPagoCTE);
+    constructor Create;
+
+ end;
+implementation
+
+
+
+
+constructor TFormaPagoCtaCteService.Create;
+begin
+   pagoCtaCteDAO:= TFPagoCuentaCteDAO.Create;
+end;
+
+
+procedure TFormaPagoCtaCteService.registrarFormaPago(formaPago:TFPagoCTE);
+begin
+   try
+      pagoCtaCteDAO.iniciarTransaccion;
+      pagoCtaCteDAO.insertar(formaPago);
+      pagoCtaCteDAO.commit;
+   except
+    on E:Exception do
+    begin
+      pagoCtaCteDAO.rollback;
+      raise Exception.Create('No se pudo registrar el pago de la cuenta corriente');
+    end;
+
+   end;
+end;
+
+end.

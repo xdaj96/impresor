@@ -747,6 +747,10 @@ object fimpresor: Tfimpresor
     object Configuracion: TTabSheet
       Caption = 'Configuracion'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Bguardar: TBitBtn
         Left = 35
         Top = 415

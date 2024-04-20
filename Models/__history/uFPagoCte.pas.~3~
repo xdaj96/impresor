@@ -1,0 +1,23 @@
+unit uFPagoCte;
+
+interface
+  type
+  TFPagoCTE = class
+  private
+ 
+    fCodCtaCte: string;
+    fCodSubCta: string;
+    fImpCtaCte: Double;
+    fImpSubCtaCte: Double;
+  public
+    property NroSucursal: string read fNroSucursal write fNroSucursal;
+    property TipComprobante: string read fTipComprobante write fTipComprobante;
+    property NroComprob: string read fNroComprob write fNroComprob;
+    property CodCtaCte: string read fCodCtaCte write fCodCtaCte;
+    property CodSubCta: string read fCodSubCta write fCodSubCta;
+    property ImpCtaCte: Double read fImpCtaCte write fImpCtaCte;
+    property ImpSubCtaCte: Double read fImpSubCtaCte write fImpSubCtaCte;
+  end;
+implementation
+
+end.

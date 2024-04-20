@@ -1,0 +1,46 @@
+unit uPagoChequeService;
+
+interface
+  uses sysUtils,uPagoChequeDAO,uPagoCheque,uFormaPagoService,uBaseFormaPago;
+
+ type TPagoChequeService = class(TFormaPagoService)
+  private
+    pagoDAO:TPagoChequeDAO;
+  public
+    procedure registrarFormaPago(formaPago:TBaseFormaPago);override;
+    constructor Create;
+
+ end;
+implementation
+
+
+
+
+constructor TPagoChequeService.Create;
+begin
+   pagoDAO:= TPagoChequeDAO.Create;
+end;
+
+procedure TPagoChequeService.registrarFormaPago(formaPago:TBaseFormaPago);
+begin
+
+  if not (formaPago is TPagoCheque) then
+     raise Exception.Create('La forma de pago ingresada no es un cheque');
+
+  try
+      pagoDAO.iniciarTransaccion;
+      pagoDAO.insertar(TPagoCheque(formaPago));
+      pagoDAO.commit;
+   except
+    on E:Exception do
+    begin
+      pagoDAO.rollback;
+      raise Exception.Create('No se pudo registrar el pago en la cuenta corrente:'+E.Message);
+    end;
+
+   end
+
+end;
+
+
+end.

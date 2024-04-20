@@ -10,8 +10,8 @@
     <Transaction>2017/05/18 12:43:55.000.175,=C:\programas_datos\impresor2\Unit2.pas</Transaction>
     <Transaction>2017/05/18 12:44:50.000.758,C:\programas_datos\impresor2\Unit2.pas=C:\programas_datos\impresor2\Udticket.pas</Transaction>
     <Transaction>2017/05/18 13:10:47.000.493,=C:\programas_datos\impresor2\UIMPRESION.pas</Transaction>
-    <Transaction>2017/05/18 13:12:14.000.832,C:\programas_datos\impresor2\Unit1.pas=C:\programas_datos\impresor2\Uimpresor.pas</Transaction>
     <Transaction>2017/05/18 13:12:14.000.832,C:\programas_datos\impresor2\Unit1.dfm=C:\programas_datos\impresor2\Uimpresor.dfm</Transaction>
+    <Transaction>2017/05/18 13:12:14.000.832,C:\programas_datos\impresor2\Unit1.pas=C:\programas_datos\impresor2\Uimpresor.pas</Transaction>
     <Transaction>2017/05/18 13:14:26.000.799,=C:\programas_datos\impresor2\UdmFacturador.pas</Transaction>
     <Transaction>2017/05/18 13:18:59.000.861,C:\programas_datos\impresor2\UIMPRESION.pas=</Transaction>
     <Transaction>2018/07/06 12:18:53.000.354,C:\programas_datos\recuperado2\impresor2\Project2.dproj=C:\programas_datos\recuperado2\impresor2\impresor.dproj</Transaction>
@@ -19,14 +19,14 @@
     <Transaction>2018/07/23 10:48:12.000.467,C:\programas_datos\APlus_SRC\Uadicionales.pas=</Transaction>
     <Transaction>2018/07/23 10:49:38.000.032,=C:\programas_datos\recuperado2\impresor2\Uadicionales.pas</Transaction>
     <Transaction>2021/06/07 14:18:35.000.995,C:\programas_datos\recuperado2\impresor2\Uadicionales.pas=</Transaction>
-    <Transaction>2023/10/27 14:20:47.000.713,=C:\NET\desarrollo\impresor\Impresor\Libs\uFiscalEpson.pas</Transaction>
     <Transaction>2023/10/27 14:20:47.000.730,=C:\NET\desarrollo\impresor\Impresor\Libs\uFiscalEpson2.pas</Transaction>
+    <Transaction>2023/10/27 14:20:47.000.713,=C:\NET\desarrollo\impresor\Impresor\Libs\uFiscalEpson.pas</Transaction>
     <Transaction>2023/10/27 14:20:57.000.519,=C:\NET\desarrollo\impresor\Impresor\Helpers\uRegistryHelper.pas</Transaction>
     <Transaction>2023/10/27 14:21:04.000.971,=C:\NET\desarrollo\impresor\Impresor\Models\uBaseTicket.pas</Transaction>
     <Transaction>2023/10/27 14:21:05.000.020,=C:\NET\desarrollo\impresor\Impresor\Models\UFormaPago.pas</Transaction>
-    <Transaction>2023/10/27 14:21:05.000.056,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketTEpson.pas</Transaction>
     <Transaction>2023/10/27 14:21:05.000.003,=C:\NET\desarrollo\impresor\Impresor\Models\UFormaDePago.pas</Transaction>
     <Transaction>2023/10/27 14:21:05.000.038,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketBEpson.pas</Transaction>
+    <Transaction>2023/10/27 14:21:05.000.056,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketTEpson.pas</Transaction>
     <Transaction>2023/10/27 14:21:18.000.647,=C:\NET\desarrollo\impresor\Impresor\Utils\uUtils.pas</Transaction>
     <Transaction>2023/12/03 17:55:40.000.855,=C:\NET\desarrollo\impresor\Impresor\Unit1.pas</Transaction>
     <Transaction>2023/12/03 17:55:48.000.318,C:\NET\desarrollo\impresor\impresor\DAO\uPagoChequeDAO.pas=C:\NET\desarrollo\impresor\Impresor\Unit1.pas</Transaction>
@@ -35,12 +35,19 @@
     <Transaction>2023/12/03 18:58:01.000.987,=C:\NET\desarrollo\impresor\Impresor\Unit1.pas</Transaction>
     <Transaction>2023/12/03 19:45:04.000.480,C:\NET\desarrollo\impresor\impresor\Services\uPagoChequeService.pas=C:\NET\desarrollo\impresor\Impresor\Unit1.pas</Transaction>
     <Transaction>2023/12/06 21:38:46.000.494,=C:\NET\desarrollo\impresor\Impresor\Models\uTicketAEpson.pas</Transaction>
-    <Transaction>2024/04/14 21:12:52.003,=C:\NET\desarrollo\desarrollo\aplus\impresor\Vistas\ufBuscarTK.pas</Transaction>
-    <Transaction>2024/04/14 21:12:52.025,=C:\NET\desarrollo\desarrollo\aplus\impresor\Vistas\__history</Transaction>
+    <Transaction>2024/04/14 21:12:52.000.003,=C:\NET\desarrollo\desarrollo\aplus\impresor\Vistas\ufBuscarTK.pas</Transaction>
+    <Transaction>2024/04/14 21:12:52.000.025,=C:\NET\desarrollo\desarrollo\aplus\impresor\Vistas\__history</Transaction>
+    <Transaction>2024/04/18 22:51:51.000.188,=C:\NET\desarrollo\desarrollo\aplus\impresor\DAO\__history</Transaction>
+    <Transaction>2024/04/18 22:51:51.000.184,=C:\NET\desarrollo\desarrollo\aplus\impresor\DAO\uPagoCtaCteDAO.pas</Transaction>
+    <Transaction>2024/04/18 22:52:05.000.741,=C:\NET\desarrollo\desarrollo\aplus\impresor\Models\uFPagoCte.pas</Transaction>
+    <Transaction>2024/04/18 22:53:13.000.251,=C:\NET\desarrollo\desarrollo\aplus\impresor\Services\__history</Transaction>
+    <Transaction>2024/04/18 22:53:13.000.246,=C:\NET\desarrollo\desarrollo\aplus\impresor\Services\uPagoCtaCteService.pas</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
     <File Path="DAO"/>
     <File Path="DAO\uPagoChequeDAO.pas"/>
+    <File Path="DAO\uPagoCtaCteDAO.pas"/>
+    <File Path="DAO\__history"/>
     <File Path="Helpers"/>
     <File Path="Helpers\uRegistryHelper.pas"/>
     <File Path="Libs"/>
@@ -50,12 +57,15 @@
     <File Path="Models\uBaseTicket.pas"/>
     <File Path="Models\UFormaDePago.pas"/>
     <File Path="Models\UFormaPago.pas"/>
-    <File Path="Models\uTicketBEpson.pas"/>
-    <File Path="Models\uTicketTEpson.pas"/>
+    <File Path="Models\uFPagoCte.pas"/>
     <File Path="Models\uPagoCheque.pas"/>
     <File Path="Models\uTicketAEpson.pas"/>
+    <File Path="Models\uTicketBEpson.pas"/>
+    <File Path="Models\uTicketTEpson.pas"/>
     <File Path="Services"/>
     <File Path="Services\uPagoChequeService.pas"/>
+    <File Path="Services\uPagoCtaCteService.pas"/>
+    <File Path="Services\__history"/>
     <File Path="Utils"/>
     <File Path="Utils\uUtils.pas"/>
     <File Path="Vistas"/>

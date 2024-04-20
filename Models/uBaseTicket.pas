@@ -8,6 +8,11 @@ interface
  type
   TBaseTicket = class
   private
+    error : LongInt;
+  str : Array[0..200] of Char;
+  mayor : LongInt;
+  menor : LongInt;
+  mychar: char;
    procedure imprimirDatosAfiliadoValidacion;
    procedure imprimirCodBarrasValidacionOnline;
    procedure imprimirBarrasSeguimientoComprobante;
@@ -29,6 +34,7 @@ interface
       imprimi: boolean;
       ImprimiParteTK:boolean;
       nro_comprob:Integer;
+
       function puedeImprimir:Boolean;
       procedure EstablecerEncabezadoTalonOS;
       procedure ImprimirTicket(var imprimio: Boolean; var reimpresion:boolean); virtual; abstract;
@@ -36,8 +42,10 @@ interface
       procedure imprimirFormaDePagoEnTicket;
       procedure GuardarXML(const XML: TXMLDocument);
       procedure setTKFiscal(nro_tk:string);
+      procedure imprimirZ;
       constructor Create(unTicket: TTicket;gridFacturador: TDBGRID);
       procedure verificarPapel;
+      function estadoFiscal:boolean;
       destructor Destroy; override;
   end;
 implementation
@@ -96,10 +104,26 @@ begin
 
 end;
 
+procedure TBaseTicket.imprimirZ;
+begin
+        fiscalEpson.imprimirZ;
+
+end;
+
+
 procedure TBaseTicket.setTKFiscal(nro_tk: string);
 begin
   ticket.numero_ticketfiscal:= strToInt(nro_tk);
 
+end;
+
+function TBaseTicket.estadoFiscal;
+begin
+
+  error := fiscalEpson.CerrarComprobante();
+  error := fiscalEpson.Conectar();
+  error := fiscalEpson.Desconectar();
+  Result:= error =0;
 end;
 
 procedure TBaseTicket.verificarPapel;

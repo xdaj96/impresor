@@ -111,7 +111,12 @@
         <DCCReference Include="Services\uPagoChequeService.pas"/>
         <DCCReference Include="Models\uTicketAEpson.pas"/>
         <DCCReference Include="Vistas\ufBuscarTK.pas"/>
+        <DCCReference Include="DAO\uPagoCtaCteDAO.pas"/>
+        <DCCReference Include="Models\uFPagoCte.pas"/>
+        <DCCReference Include="Services\uPagoCtaCteService.pas"/>
         <None Include="Vistas\__history"/>
+        <None Include="DAO\__history"/>
+        <None Include="Services\__history"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -141,9 +146,21 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment>
+                <DeployFile LocalName="DAO\__history" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Win32\Debug\impresor.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>impresor.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Services\__history" Configuration="Debug" Class="ProjectFile">
+                    <Platform Name="Win32">
+                        <RemoteDir>.\</RemoteDir>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>

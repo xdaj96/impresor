@@ -8,7 +8,14 @@ uses
   Vcl.Grids, Vcl.ValEdit, Vcl.StdCtrls, Vcl.Buttons, Vcl.DBGrids, Vcl.FileCtrl,
   Data.DB, Datasnap.DBClient,  Xml.xmldom, Xml.XMLIntf,uPagoChequeService, uUtils,
   msxmldom, xml.xmldoc, udticket, Vcl.OleCtrls, FiscalPrinterLib_TLB, system.Win.ComObj, math,
-  Vcl.Menus, Vcl.AppEvnts,uBaseTicket,uTicketTEpson,uTicketBEpson,uTicketAEpson,ufBuscarTK; //uadicionales;
+  Vcl.Menus, Vcl.AppEvnts,uBaseTicket,uTicketTEpson,uTicketBEpson,uTicketAEpson,ufBuscarTK,
+
+  // Formas de pago
+    uFPagoCte,uPagoCtaCteService,uPagoEfectivo,uPagoefectivoService,uFormaPagoService,uBaseFormaPago,uPagoCheque,
+    uPagoTarjeta,uPagoTarjetaService
+
+
+  ; //uadicionales;
 const
 
   RegKey ='Software\Autofarma\impresor\';
@@ -85,7 +92,7 @@ type
     procedure Button3Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure BimprimireClick(Sender: TObject);
-    procedure ImprimirTicketAepson(var  Imprimio:boolean);
+
     procedure copiadigital;
     procedure Button1Click(Sender: TObject);
     procedure btnReimprimirClick(Sender: TObject);
@@ -108,6 +115,11 @@ type
     ultTipComprob:string;
     archivo: string;
     procedure crearComprobanteImpresion;
+
+    procedure registrarPago(pagoService: TFormaPagoService; unCompPago: TBaseFormaPago);
+
+    procedure registrarFormaDePagoTicket;
+
 
 
   public
@@ -150,6 +162,11 @@ begin
     ShowMessage('La aplicación no se encontró.');
   end;
 end;
+
+
+
+
+
 
 procedure Tfimpresor.crearComprobanteImpresion;
 begin
@@ -267,6 +284,97 @@ begin
   Result := errCode;
 end;
 
+//----------------------------------------------------------------------------//
+// Pagos del ticket
+//----------------------------------------------------------------------------//
+
+procedure Tfimpresor.registrarFormaDePagoTicket;
+var
+  pagoService: TFormaPagoService;
+  unCompPago: TBaseFormaPago;
+begin
+  //INSERTAR VTTBPAGOCHEQUE          --VR LLEVA TODOS LOS MEDIOS DE PAGO
+  if TICKET.cheque <> 0 then
+  begin
+      pagoService := TpagoChequeService.Create;
+      unCompPago:= TPagoCheque.Create;
+      registrarPago(pagoService,unCompPago);
+  end;
+  //INSTERTAR VTTPAGOCTACTE
+  if TICKET.ctacte <> 0 then
+  begin
+     pagoService:= TFormaPagoCtaCteService.Create;
+     unCompPago:=TFPagoCte.Create;
+     registrarPago(pagoService,unCompPago);
+  end;
+  //INSERTAR VTTPAGOEFECTIVO
+  if TICKET.efectivO <> 0 then
+  begin
+    pagoService:= TPagoEfectivoService.Create;
+    unCompPago:=TPagoEfectivo.Create;
+    registrarPago(pagoService,unCompPago);
+  end;
+
+
+ //INSERTAR VTTBPAGOTARJETA
+ if TICKET.tarjeta<>0 then
+ begin
+    pagoService:= TPagoTarjetaService.Create;
+    unCompPago:=TPagoTarjeta.Create;
+    registrarPago(pagoService,unCompPago);
+  end;
+
+end;
+
+
+
+
+// Manejador de las formas de pago
+procedure Tfimpresor.registrarPago(pagoService: TFormaPagoService; unCompPago: TBaseFormaPago);
+begin
+
+  unCompPago.NroSucursal    := ticket.sucursal;
+  unCompPago.TipComprobante := TICKET.comprobante;
+  unCompPago.NroComprob:= ticket.fiscla_pv + (rightpad(inttostr(nro_comprob), '0', 8));
+
+  // El pago se realiza en efectivo
+  if unCompPago is TPagoEfectivo then
+     TPagoEfectivo(unCompPago).imp_efectivo:= TICKET.efectivo;
+
+  // El pago se realiza en cuenta corriente
+  if unCompPago is TFPagoCTE then
+  begin
+    TFPagoCTE(unCompPago).CodCtaCte:= ticket.codigocc;
+    TFPagoCTE(unCompPago).CodSubCta:= ticket.codigosubcc;
+    TFPagoCTE(unCompPago).ImpCtaCte:= TICKET.ctacte;
+    TFPagoCTE(unCompPago).ImpSubCtaCte:=  TICKET.ctacte;
+  end;
+
+  // El pago se realiza con cheque
+  if unCompPago is TPagoCheque then
+  begin
+      TPagoCheque(unCompPago).cod_banco := ticket.codigocheque;
+      TPagoCheque(unCompPago).nro_cheque := ticket.numerocheque;
+      TPagoCheque(unCompPago).importe := TICKET.cheque;
+  end;
+
+  // El pago se realiza con tarjeta
+  if unCompPago is TPagoTarjeta then
+  begin
+      TPagoTarjeta(unCompPago).codigo := ticket.codigotarjeta;
+      TPagoTarjeta(unCompPago).importe := TICKET.tarjeta;
+  end;
+
+
+
+  pagoService.registrarFormaPago(unCompPago);
+  pagoService.Free;
+  unCompPago.Free;
+end;
+
+
+
+//------------------PAGOS DEL TICKET--------------------------------------------
 
 
 procedure Tfimpresor.ApplicationEvents1Minimize(Sender: TObject);
@@ -665,7 +773,7 @@ for I := 0 to flist.Items.Count -1 do
        except
        on E:Exception do
        begin
-         mticket.Lines.Add(E.message);
+         ShowMessage(e.Message);
        end;
       end;
      finally
@@ -1786,7 +1894,7 @@ except
      //mostrarVentanaPrimerPlano;
     mticket.lines.Add(E.Message);
     application.ProcessMessages;
-    Sleep(3000);
+    Sleep(1000);
     bimprimirE.click;
   end;
 
@@ -1827,7 +1935,7 @@ begin
     if not (fBuscarTK.rutaTicket = '') then
     begin
      CopyFile(pchar(fBuscarTK.rutaTicket), pchar(ticket.cola+fBuscarTK.archivo+'_reimpresion.xml'), false);
-     sleep(3000);
+
     end;
 
 
@@ -1846,128 +1954,13 @@ begin
 end;
 
 procedure Tfimpresor.Button2Click(Sender: TObject);
-TYPE
-  TConsultarVersionDll = function ( descripcion : PChar; descripcion_largo_maximo: LongInt; var mayor : LongInt; var menor : LongInt) : LongInt; StdCall;
-
-  TConfigurarVelocidad = function ( velocidad: LongInt ) : LongInt; StdCall;
-
-  TConfigurarPuerto = function ( velocidad: String ) : LongInt; StdCall;
-
-  TConectar = function () : LongInt; StdCall;
-
-  TImprimirCierreX = function () : LongInt; StdCall;
-
-  TImprimirCierreZ = function () : LongInt; StdCall;
-
-  TDesconectar = function () : LongInt; StdCall;
-
-  tEstablecerEncabezado= function( numero_encabezado: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tAbrirComprobante= function( id_tipo_documento: integer)  : LongInt; StdCall;
-
-  tCerrarComprobante= function()  : LongInt; StdCall;
-
-  tEnviarComando=function ( commando:PansiChar  )  : LongInt; StdCall;
-
-  tConsultarEncabezado=function( numero_encabezado: integer;  respuesta: string ;respuesta_largo_maximo:integer): LongInt; StdCall;
-
-  tEstablecerCola=function( numero_cola: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tCargarTextoExtra=function(descripcion :PansiChar ): LongInt; StdCall;
-
-  TImprimirItem=function(id_modificador : integer; descripcion :Pansichar; cantidad :Pansichar; precio : Pansichar; id_tasa_iva : Integer; ii_id: integer; ii_valor: Pansichar; id_codigo : integer; codigo: Pansichar; codigo_unidad_matrix: Pansichar; código_unidad_medida: integer ):LongInt; StdCall;
-
-  TCargarPago=function(id_modificador: Integer;  codigo_forma_pago:Integer; cantidad_cuotas:Integer; monto : Pansichar;descripción_cupones:Pansichar;descripcion:Pansichar;descripcion_extra1:Pansichar;descripcion_extra2:Pansichar): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteUltimo=function(tipo_de_comprobante: pansichar; respuesta: pansichar; respuesta_largo_maximo: Longint):Longint; StdCall;
-
-  TObtenerRespuesta=function(buffer_salida:pansichar; largo_buffer_salida: integer;largo_final_buffer_salida: integer): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteActual=function( respuesta : pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TConsultarFechaHora=function(respuesta: pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TCargarAjuste=function ( id_modificador: integer ; descripcion: pansichar; monto : pansichar ;id_tasa_iva: integer; codigo_interno:pansichar ):Longint; Stdcall;
-
-  TObtenerRespuestaExtendida=function ( numero_campo: longint;buffer_salida: pansichar;largo_buffer_salida : longint; largo_final_buffer_salida: longint ): LongInt; Stdcall;
-
-  TImprimirTextoLibre=function(descripcion : Pansichar ):Longint; Stdcall;
-
-  TCargarDatosCliente=function(nombre_o_razon_social1: pansichar; nombre_o_razon_social2: pansichar; domicilio1: pansichar; domicilio2: pansichar; domicilio3: pansichar; id_tipo_documento: Longint	; numero_documento: pansichar; id_responsabilidad_iva: Longint):Longint; stdcall;
-
-  TCargarComprobanteAsociado=function( descripcion: pansichar ): Longint; Stdcall;
-
 var
-
-  dll  : THandle;
-  error : LongInt;
-  str : Array[0..200] of Char;
-  mayor : LongInt;
-  menor : LongInt;
-  mychar: char;
-
-  ConfigurarVelocidad: TConfigurarVelocidad;
-  ConfigurarPuerto: TConfigurarPuerto;
-  Conectar: TConectar;
-  ImprimirCierreX: TImprimirCierreX;
-  ImprimirCierreZ: TImprimirCierreZ;
-  Desconectar: TDesconectar;
-  ConsultarVersionDll: TConsultarVersionDll;
-  establecerencabezado: testablecerencabezado;
-  ConsultarEncabezado: tConsultarEncabezado;
-  abrircomprobante: tabrircomprobante;
-  CerrarComprobante: tCerrarComprobante;
-  EnviarComando: tEnviarComando;
-  EstablecerCola: tEstablecerCola;
-  CargarTextoExtra: tCargarTextoExtra;
-  ImprimirItem: tImprimirItem;
-  CargarPago: TCargarPago;
-  ConsultarNumeroComprobanteUltimo: TConsultarNumeroComprobanteUltimo;
-  ObtenerRespuesta: TObtenerRespuesta;
-  ConsultarNumeroComprobanteActual: TConsultarNumeroComprobanteActual;
-  ConsultarFechaHora : TConsultarFechaHora;
-  ObtenerRespuestaExtendida: tObtenerRespuestaExtendida;
-  Cargarajuste: Tcargarajuste;
-  ImprimirTextoLibre: TImprimirTextoLibre;
-  CargarDatosCliente: TCargarDatosCliente;
-  CargarComprobanteAsociado: TCargarComprobanteAsociado;
-
 eSTADOFISCAL: string;
 estado:string;
 fecha:tdate;
 numerob:string;
 numeroa:string;
-z: integer;
-RESPONSABLEIVA: TiposDeResponsabilidades;
-valoriva: double;
-direccioncliente: olevariant;
-descripcioncortada: string;
-descripcion: string;
-efectivoredondeado: double;
-afiliado: double;
-prueba: Array[0..200] of AnsiChar;
-comando: Array[0..200] of AnsiChar;
-cantidadep: Array[0..200] of AnsiChar;
-precioep: Array[0..200] of AnsiChar;
-alfabetaep: Array[0..200] of AnsiChar;
-monto: Array[0..200] of AnsiChar;
-tipcomprob : Array[0..200] of AnsiChar;
-respuesta:  Array[0..10000] of AnsiChar;
-numero: array [0..10000] of longint;
-fechahora: array [0..300] of Ansichar;
-cliente: Array[0..200] of AnsiChar;
-domicilio: Array[0..200] of AnsiChar;
-cuitcliente: Array[0..200] of AnsiChar;
-dnicliente: Array[0..200] of AnsiChar;
-tipdoc: array[0..200] of longint;
-respuesta_final_buffer_salida: integer;
-dnfh:string;
-valorivaep: integer;
-texto: string;
-CODIGOIVA: string;
-ofecupon: string;
-
-
+EstafiscalConectado:boolean;
 begin
  if ticket.fiscal='H' then
     BEGIN
@@ -2008,187 +2001,16 @@ begin
    END;
    if ticket.fiscal='E' then
     begin
-       dll := 0;
-    // instanciar dll - recordar que se require "uses Windows"
+        ticketImprimir:= TTicketAEpson.Create(ticket,Gfacturador);
+        EstafiscalConectado:= ticketImprimir.estadoFiscal;
 
-       dll := LoadLibrary('C:\EpsonFiscalInterface.dll');
-
-    // check error
-        if dll = 0 then
-        begin
-          ShowMessage('Error al instanciar DLL');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "ConsultarVersionDll"
-        @ConsultarVersionDll := GetProcAddress(dll, 'ConsultarVersionDll');
-        if not Assigned(ConsultarVersionDll) then
-        begin
-          ShowMessage('Error al asignar funcion: ConsultarVersionDll');
-          Exit;
-        end;
-
-
-        // obtener las referencias a funciones:  "ConfigurarVelocidad"
-        @ConfigurarVelocidad := GetProcAddress(dll, 'ConfigurarVelocidad');
-        if not Assigned(ConfigurarVelocidad) then
-        begin
-          ShowMessage('Error al asignar funcion: ConfigurarVelocidad');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "ConfigurarPuerto"
-        @ConfigurarPuerto := GetProcAddress(dll, 'ConfigurarPuerto');
-        if not Assigned(ConfigurarPuerto) then
-        begin
-          ShowMessage('Error al asignar funcion: ConfigurarPuerto');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "Conectar"
-        @Conectar := GetProcAddress(dll, 'Conectar');
-        if not Assigned(Conectar) then
-        begin
-          ShowMessage('Error al asignar funcion: Conectar');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "ImprimirCierreX"
-        @ImprimirCierreX := GetProcAddress(dll, 'ImprimirCierreX');
-        if not Assigned(ImprimirCierreX) then
-        begin
-          ShowMessage('Error al asignar funcion: ImprimirCierreX');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "ImprimirCierreZ"
-        @ImprimirCierreZ := GetProcAddress(dll, 'ImprimirCierreZ');
-        if not Assigned(ImprimirCierreZ) then
-        begin
-          ShowMessage('Error al asignar funcion: ImprimirCierreZ');
-          Exit;
-        end;
-
-        @AbrirComprobante := GetProcAddress(dll, 'AbrirComprobante');
-        if not Assigned(AbrirComprobante) then
-        begin
-          ShowMessage('Error al asignar funcion: AbrirComprobante');
-          Exit;
-        end;
-         @CerrarComprobante := GetProcAddress(dll, 'CerrarComprobante');
-        if not Assigned(AbrirComprobante) then
-        begin
-          ShowMessage('Error al asignar funcion: CerrarComprobante');
-          Exit;
-        end;
-           @Establecerencabezado := GetProcAddress(dll, 'EstablecerEncabezado');
-        if not Assigned(AbrirComprobante) then
-        begin
-          ShowMessage('Error al asignar funcion: CerrarComprobante');
-          Exit;
-        end;
-            @ConsultarEncabezado:= GetProcAddress(dll, 'EstablecerEncabezado');
-        if not Assigned(AbrirComprobante) then
-        begin
-          ShowMessage('Error al asignar funcion: CerrarComprobante');
-          Exit;
-        end;
-             @EnviarComando := GetProcAddress(dll, 'EnviarComando');
-        if not Assigned(EnviarComando) then
-        begin
-          ShowMessage('Error al asignar funcion: EnviarComando');
-          Exit;
-        end;
-
-        // obtener las referencias a funciones:  "Desconectar"
-        @Desconectar := GetProcAddress(dll, 'Desconectar');
-        if not Assigned(Desconectar) then
-        begin
-          ShowMessage('Error al asignar funcion: Desconectar');
-          Exit;
-        end;
-          @EstablecerCola := GetProcAddress(dll, 'EstablecerCola');
-        if not Assigned(EstablecerCola) then
-        begin
-          ShowMessage('Error al asignar funcion: EstablecerCola');
-          Exit;
-        end;
-            @CargarTextoExtra := GetProcAddress(dll, 'CargarTextoExtra');
-        if not Assigned(CargarTextoExtra) then
-        begin
-          ShowMessage('Error al asignar funcion: CargarTextoExtra');
-          Exit;
-        end;
-           @ImprimirItem := GetProcAddress(dll, 'ImprimirItem');
-        if not Assigned(ImprimirItem) then
-        begin
-          ShowMessage('Error al asignar funcion: ImprimirItem');
-          Exit;
-        end;
-             @CargarPago := GetProcAddress(dll, 'CargarPago');
-        if not Assigned(CargarPago) then
-        begin
-          ShowMessage('Error al asignar funcion: CargarPago');
-          Exit;
-        end;
-
-               @ConsultarNumeroComprobanteActual := GetProcAddress(dll, 'ConsultarNumeroComprobanteActual');
-        if not Assigned(ConsultarNumeroComprobanteActual) then
-        begin
-          ShowMessage('Error al asignar funcion: ConsultarNumeroComprobanteActual');
-          Exit;
-        end;
-                 @Consultarfechahora := GetProcAddress(dll, 'Consultarfechahora');
-        if not Assigned(ConsultarNumeroComprobanteActual) then
-        begin
-          ShowMessage('Error al asignar funcion: Consultarfechahora');
-          Exit;
-        end;
-
-                   @ObtenerRespuestaExtendida:= GetProcAddress(dll, 'ObtenerRespuestaExtendida');
-        if not Assigned(ObtenerRespuestaExtendida) then
-        begin
-          ShowMessage('Error al asignar funcion: ObtenerRespuestaExtendida');
-          Exit;
-        end;
-                     @CargarAjuste:= GetProcAddress(dll, 'CargarAjuste');
-        if not Assigned(Cargarajuste) then
-        begin
-          ShowMessage('Error al asignar funcion: CargarAjuste');
-          Exit;
-        end;
-
-                  @ImprimirTextoLibre:= GetProcAddress(dll, 'ImprimirTextoLibre');
-          if not Assigned(ImprimirTextoLibre) then
-        begin
-          ShowMessage('Error al asignar funcion: ImprimirTextoLibre');
-          Exit;
-        end;
-
-        mayor := 0;
-        menor := 0;
-        mychar:=' ';
-        error := ConsultarVersionDll( @str[0], 100, mayor, menor );
-        error := ConfigurarVelocidad( 9600 );
-        error := ConfigurarPuerto( ticket.puerto_com );
-        error := CerrarComprobante();
-        error := Conectar();
-
-
-
-        error := Desconectar();
-
-        FreeLibrary(dll);
-
-
-        if error= 0 then
+        if EstafiscalConectado then
         begin
            BUTTON3.Enabled:=TRUE;
-
            button2.Enabled:=true;
            mticket.Lines.Add('TODO OK FISCAL EPSON CONECTADO');
-        end;
-        if error<>0 then
+        end
+        else
         BEGIN
            mticket.Lines.Add('ERROR FISCAL EPSON DESCONECTADO');
            BUTTON3.Enabled:=FALSE;
@@ -2203,84 +2025,12 @@ begin
 end;
 
 procedure Tfimpresor.Button3Click(Sender: TObject);
-TYPE
-  TConsultarVersionDll = function ( descripcion : PChar; descripcion_largo_maximo: LongInt; var mayor : LongInt; var menor : LongInt) : LongInt; StdCall;
 
-  TConfigurarVelocidad = function ( velocidad: LongInt ) : LongInt; StdCall;
-
-  TConfigurarPuerto = function ( velocidad: String ) : LongInt; StdCall;
-
-  TConectar = function () : LongInt; StdCall;
-
-  TImprimirCierreX = function () : LongInt; StdCall;
-
-  TImprimirCierreZ = function () : LongInt; StdCall;
-
-  TDesconectar = function () : LongInt; StdCall;
-
-  tEstablecerEncabezado= function( numero_encabezado: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tAbrirComprobante= function( id_tipo_documento: integer)  : LongInt; StdCall;
-
-  tCerrarComprobante= function()  : LongInt; StdCall;
-
-  tEnviarComando=function ( commando:PansiChar  )  : LongInt; StdCall;
-
-  tConsultarEncabezado=function( numero_encabezado: integer;  respuesta: string ;respuesta_largo_maximo:integer): LongInt; StdCall;
-
-  tEstablecerCola=function( numero_cola: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tCargarTextoExtra=function(descripcion :PansiChar ): LongInt; StdCall;
-
-  TImprimirItem=function(id_modificador : integer; descripcion :Pansichar; cantidad :Pansichar; precio : Pansichar; id_tasa_iva : Integer; ii_id: integer; ii_valor: Pansichar; id_codigo : integer; codigo: Pansichar; codigo_unidad_matrix: Pansichar; código_unidad_medida: integer ):LongInt; StdCall;
-
-  TCargarPago=function(id_modificador: Integer;  codigo_forma_pago:Integer; cantidad_cuotas:Integer; monto : Pansichar;descripción_cupones:Pansichar;descripcion:Pansichar;descripcion_extra1:Pansichar;descripcion_extra2:Pansichar): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteUltimo=function(tipo_de_comprobante: pansichar; respuesta: pansichar; respuesta_largo_maximo: Longint):Longint; StdCall;
-
-  TObtenerRespuesta=function(buffer_salida:pansichar; largo_buffer_salida: integer;largo_final_buffer_salida: integer): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteActual=function( respuesta : pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TConsultarFechaHora=function(respuesta: pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TCargarAjuste=function ( id_modificador: integer ; descripcion: pansichar; monto : pansichar ;id_tasa_iva: integer; codigo_interno:pansichar ):Longint; Stdcall;
-
-  TObtenerRespuestaExtendida=function ( numero_campo: longint;buffer_salida: pansichar;largo_buffer_salida : longint; largo_final_buffer_salida: longint ): LongInt; Stdcall;
-
-  TImprimirTextoLibre=function(descripcion : Pansichar ):Longint; Stdcall;
-
-  TCargarDatosCliente=function(nombre_o_razon_social1: pansichar; nombre_o_razon_social2: pansichar; domicilio1: pansichar; domicilio2: pansichar; domicilio3: pansichar; id_tipo_documento: Longint	; numero_documento: pansichar; id_responsabilidad_iva: Longint):Longint; stdcall;
-
-  TCargarComprobanteAsociado=function( descripcion: pansichar ): Longint; Stdcall;
 var
 fecha: tdate;
 numero: string;
-com: integer;ImprimirCierreX: TImprimirCierreX;
-ImprimirCierreZ: TImprimirCierreZ;
-  ConfigurarVelocidad: TConfigurarVelocidad;
-  ConfigurarPuerto: TConfigurarPuerto;
-  Conectar: TConectar;
-  Desconectar: TDesconectar;
-  ConsultarVersionDll: TConsultarVersionDll;
-  establecerencabezado: testablecerencabezado;
-  ConsultarEncabezado: tConsultarEncabezado;
-  abrircomprobante: tabrircomprobante;
-  CerrarComprobante: tCerrarComprobante;
-  EnviarComando: tEnviarComando;
-  EstablecerCola: tEstablecerCola;
-  CargarTextoExtra: tCargarTextoExtra;
-  ImprimirItem: tImprimirItem;
-  CargarPago: TCargarPago;
-  ConsultarNumeroComprobanteUltimo: TConsultarNumeroComprobanteUltimo;
-  ObtenerRespuesta: TObtenerRespuesta;
-  ConsultarNumeroComprobanteActual: TConsultarNumeroComprobanteActual;
-  ConsultarFechaHora : TConsultarFechaHora;
-  ObtenerRespuestaExtendida: tObtenerRespuestaExtendida;
-  Cargarajuste: Tcargarajuste;
-  ImprimirTextoLibre: TImprimirTextoLibre;
-  CargarDatosCliente: TCargarDatosCliente;
-  CargarComprobanteAsociado: TCargarComprobanteAsociado;
+com: integer;
+
 dll  : THandle;
   error : LongInt;
   str : Array[0..200] of Char;
@@ -2312,181 +2062,9 @@ BEGIN
 END;
 if ticket.fiscal='E' then
 BEGIN
-dll := 0;
-    // instanciar dll - recordar que se require "uses Windows"
-
-      dll := LoadLibrary('C:\EpsonFiscalInterface.dll');
-
-  // check error
- if dll = 0 then
-  begin
-    ShowMessage('Error al instanciar DLL');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ConsultarVersionDll"
-  @ConsultarVersionDll := GetProcAddress(dll, 'ConsultarVersionDll');
-  if not Assigned(ConsultarVersionDll) then
-  begin
-    ShowMessage('Error al asignar funcion: ConsultarVersionDll');
-    Exit;
-  end;
-
-
-  // obtener las referencias a funciones:  "ConfigurarVelocidad"
-  @ConfigurarVelocidad := GetProcAddress(dll, 'ConfigurarVelocidad');
-  if not Assigned(ConfigurarVelocidad) then
-  begin
-    ShowMessage('Error al asignar funcion: ConfigurarVelocidad');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ConfigurarPuerto"
-  @ConfigurarPuerto := GetProcAddress(dll, 'ConfigurarPuerto');
-  if not Assigned(ConfigurarPuerto) then
-  begin
-    ShowMessage('Error al asignar funcion: ConfigurarPuerto');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "Conectar"
-  @Conectar := GetProcAddress(dll, 'Conectar');
-  if not Assigned(Conectar) then
-  begin
-    ShowMessage('Error al asignar funcion: Conectar');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ImprimirCierreX"
-  @ImprimirCierreX := GetProcAddress(dll, 'ImprimirCierreX');
-  if not Assigned(ImprimirCierreX) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirCierreX');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ImprimirCierreZ"
-  @ImprimirCierreZ := GetProcAddress(dll, 'ImprimirCierreZ');
-  if not Assigned(ImprimirCierreZ) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirCierreZ');
-    Exit;
-  end;
-
-  @AbrirComprobante := GetProcAddress(dll, 'AbrirComprobante');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: AbrirComprobante');
-    Exit;
-  end;
-   @CerrarComprobante := GetProcAddress(dll, 'CerrarComprobante');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-     @Establecerencabezado := GetProcAddress(dll, 'EstablecerEncabezado');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-      @ConsultarEncabezado:= GetProcAddress(dll, 'EstablecerEncabezado');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-       @EnviarComando := GetProcAddress(dll, 'EnviarComando');
-  if not Assigned(EnviarComando) then
-  begin
-    ShowMessage('Error al asignar funcion: EnviarComando');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "Desconectar"
-  @Desconectar := GetProcAddress(dll, 'Desconectar');
-  if not Assigned(Desconectar) then
-  begin
-    ShowMessage('Error al asignar funcion: Desconectar');
-    Exit;
-  end;
-    @EstablecerCola := GetProcAddress(dll, 'EstablecerCola');
-  if not Assigned(EstablecerCola) then
-  begin
-    ShowMessage('Error al asignar funcion: EstablecerCola');
-    Exit;
-  end;
-      @CargarTextoExtra := GetProcAddress(dll, 'CargarTextoExtra');
-  if not Assigned(CargarTextoExtra) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarTextoExtra');
-    Exit;
-  end;
-     @ImprimirItem := GetProcAddress(dll, 'ImprimirItem');
-  if not Assigned(ImprimirItem) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirItem');
-    Exit;
-  end;
-       @CargarPago := GetProcAddress(dll, 'CargarPago');
-  if not Assigned(CargarPago) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarPago');
-    Exit;
-  end;
-
-         @ConsultarNumeroComprobanteActual := GetProcAddress(dll, 'ConsultarNumeroComprobanteActual');
-  if not Assigned(ConsultarNumeroComprobanteActual) then
-  begin
-    ShowMessage('Error al asignar funcion: ConsultarNumeroComprobanteActual');
-    Exit;
-  end;
-           @Consultarfechahora := GetProcAddress(dll, 'Consultarfechahora');
-  if not Assigned(ConsultarNumeroComprobanteActual) then
-  begin
-    ShowMessage('Error al asignar funcion: Consultarfechahora');
-    Exit;
-  end;
-
-             @ObtenerRespuestaExtendida:= GetProcAddress(dll, 'ObtenerRespuestaExtendida');
-  if not Assigned(ObtenerRespuestaExtendida) then
-  begin
-    ShowMessage('Error al asignar funcion: ObtenerRespuestaExtendida');
-    Exit;
-  end;
-               @CargarAjuste:= GetProcAddress(dll, 'CargarAjuste');
-  if not Assigned(Cargarajuste) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarAjuste');
-    Exit;
-  end;
-
-            @ImprimirTextoLibre:= GetProcAddress(dll, 'ImprimirTextoLibre');
-    if not Assigned(ImprimirTextoLibre) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirTextoLibre');
-    Exit;
-  end;
-
-
-        mayor := 0;
-        menor := 0;
-        mychar:=' ';
-        error := ConsultarVersionDll( str, 100, mayor, menor );
-        error := ConfigurarVelocidad( 9600 );
-        error := ConfigurarPuerto( ticket.puerto_com );
-        error := CerrarComprobante();
-        error := Conectar();
-        comando:='';
-        texto:=strpcopy(comando,'0801|0C00') ;
-        error :=enviarcomando(@comando[0]);
-
-
-        error := Desconectar();
-        FreeLibrary(dll);
-
-
+  ticketImprimir:= TTicketAEpson.Create(ticket,Gfacturador);
+  ticketImprimir.imprimirZ;
+  ticketImprimir.Free;
 END;
 
 
@@ -2817,985 +2395,6 @@ ticket:=unTicket;
 end;
 
 
-procedure Tfimpresor.ImprimirTicketAepson(var Imprimio: boolean);
-type
-  TConsultarVersionDll = function ( descripcion : PChar; descripcion_largo_maximo: LongInt; var mayor : LongInt; var menor : LongInt) : LongInt; StdCall;
-
-  TConfigurarVelocidad = function ( velocidad: LongInt ) : LongInt; StdCall;
-
-  TConfigurarPuerto = function ( velocidad: String ) : LongInt; StdCall;
-
-  TConectar = function () : LongInt; StdCall;
-
-  TImprimirCierreX = function () : LongInt; StdCall;
-
-  TImprimirCierreZ = function () : LongInt; StdCall;
-
-  TDesconectar = function () : LongInt; StdCall;
-
-  tEstablecerEncabezado= function( numero_encabezado: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tAbrirComprobante= function( id_tipo_documento: integer)  : LongInt; StdCall;
-
-  tCerrarComprobante= function()  : LongInt; StdCall;
-
-  tEnviarComando=function ( commando:PansiChar  )  : LongInt; StdCall;
-
-  tConsultarEncabezado=function( numero_encabezado: integer;  respuesta: string ;respuesta_largo_maximo:integer): LongInt; StdCall;
-
-  tEstablecerCola=function( numero_cola: integer;  descripcion: PansiChar ): LongInt; StdCall;
-
-  tCargarTextoExtra=function(descripcion :PansiChar ): LongInt; StdCall;
-
-  TImprimirItem=function(id_modificador : integer; descripcion :Pansichar; cantidad :Pansichar; precio : Pansichar; id_tasa_iva : Integer; ii_id: integer; ii_valor: Pansichar; id_codigo : integer; codigo: Pansichar; codigo_unidad_matrix: Pansichar; código_unidad_medida: integer ):LongInt; StdCall;
-
-  TCargarPago=function(id_modificador: Integer;  codigo_forma_pago:Integer; cantidad_cuotas:Integer; monto : Pansichar;descripción_cupones:Pansichar;descripcion:Pansichar;descripcion_extra1:Pansichar;descripcion_extra2:Pansichar): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteUltimo=function(tipo_de_comprobante: pansichar; respuesta: pansichar; respuesta_largo_maximo: Longint):Longint; StdCall;
-
-  TObtenerRespuesta=function(buffer_salida:pansichar; largo_buffer_salida: integer;largo_final_buffer_salida: integer): LongInt; StdCall;
-
-  TConsultarNumeroComprobanteActual=function( respuesta : pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TConsultarFechaHora=function(respuesta: pansichar; respuesta_largo_maximo : integer): LongInt; Stdcall;
-
-  TCargarAjuste=function ( id_modificador: integer ; descripcion: pansichar; monto : pansichar ;id_tasa_iva: integer; codigo_interno:pansichar ):Longint; Stdcall;
-
-  TObtenerRespuestaExtendida=function ( numero_campo: longint;buffer_salida: pansichar;largo_buffer_salida : longint; largo_final_buffer_salida: longint ): LongInt; Stdcall;
-
-  TImprimirTextoLibre=function(descripcion : Pansichar ):Longint; Stdcall;
-
-  TCargarDatosCliente=function(nombre_o_razon_social1: pansichar; nombre_o_razon_social2: pansichar; domicilio1: pansichar; domicilio2: pansichar; domicilio3: pansichar; id_tipo_documento: Longint	; numero_documento: pansichar; id_responsabilidad_iva: Longint):Longint; stdcall;
-
-  TCargarComprobanteAsociado=function( descripcion: pansichar ): Longint; Stdcall;
-
-var
-  dll  : THandle;
-  error : LongInt;
-  str : Array[0..200] of Char;
-  mayor : LongInt;
-  menor : LongInt;
-  mychar: char;
-
-  ConfigurarVelocidad: TConfigurarVelocidad;
-  ConfigurarPuerto: TConfigurarPuerto;
-  Conectar: TConectar;
-  ImprimirCierreX: TImprimirCierreX;
-  ImprimirCierreZ: TImprimirCierreZ;
-  Desconectar: TDesconectar;
-  ConsultarVersionDll: TConsultarVersionDll;
-  establecerencabezado: testablecerencabezado;
-  ConsultarEncabezado: tConsultarEncabezado;
-  abrircomprobante: tabrircomprobante;
-  CerrarComprobante: tCerrarComprobante;
-  EnviarComando: tEnviarComando;
-  EstablecerCola: tEstablecerCola;
-  CargarTextoExtra: tCargarTextoExtra;
-  ImprimirItem: tImprimirItem;
-  CargarPago: TCargarPago;
-  ConsultarNumeroComprobanteUltimo: TConsultarNumeroComprobanteUltimo;
-  ObtenerRespuesta: TObtenerRespuesta;
-  ConsultarNumeroComprobanteActual: TConsultarNumeroComprobanteActual;
-  ConsultarFechaHora : TConsultarFechaHora;
-  ObtenerRespuestaExtendida: tObtenerRespuestaExtendida;
-  Cargarajuste: Tcargarajuste;
-  ImprimirTextoLibre: TImprimirTextoLibre;
-  CargarDatosCliente: TCargarDatosCliente;
-  CargarComprobanteAsociado: TCargarComprobanteAsociado;
-
-eSTADOFISCAL: string;
-z: integer;
-RESPONSABLEIVA: TiposDeResponsabilidades;
-valoriva: double;
-direccioncliente: olevariant;
-descripcioncortada: string;
-descripcion: string;
-efectivoredondeado: double;
-afiliado: double;
-prueba: Array[0..200] of AnsiChar;
-comando: Array[0..200] of AnsiChar;
-cantidadep: Array[0..200] of AnsiChar;
-precioep: Array[0..200] of AnsiChar;
-alfabetaep: Array[0..200] of AnsiChar;
-monto: Array[0..200] of AnsiChar;
-tipcomprob : Array[0..200] of AnsiChar;
-respuesta:  Array[0..10000] of AnsiChar;
-numero: array [0..10000] of longint;
-fechahora: array [0..300] of Ansichar;
-cliente: Array[0..200] of AnsiChar;
-domicilio: Array[0..200] of AnsiChar;
-cuitcliente: Array[0..200] of AnsiChar;
-dnicliente: Array[0..200] of AnsiChar;
-tipdoc: array[0..200] of longint;
-respuesta_final_buffer_salida: integer;
-dnfh:string;
-valorivaep: integer;
-texto: string;
-CODIGOIVA: string;
-ofecupon: string;
-numeroc: string;
-begin
-//  copiadigital;
-  dll := 0;
-
-  // instanciar dll - recordar que se require "uses Windows"
-
-  dll := LoadLibrary('C:\dll\EpsonFiscalInterface.dll');
-
-  // check error
-  if dll = 0 then
-  begin
-    ShowMessage('Error al instanciar DLL');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ConsultarVersionDll"
-  @ConsultarVersionDll := GetProcAddress(dll, 'ConsultarVersionDll');
-  if not Assigned(ConsultarVersionDll) then
-  begin
-    ShowMessage('Error al asignar funcion: ConsultarVersionDll');
-    Exit;
-  end;
-
-
-  // obtener las referencias a funciones:  "ConfigurarVelocidad"
-  @ConfigurarVelocidad := GetProcAddress(dll, 'ConfigurarVelocidad');
-  if not Assigned(ConfigurarVelocidad) then
-  begin
-    ShowMessage('Error al asignar funcion: ConfigurarVelocidad');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ConfigurarPuerto"
-  @ConfigurarPuerto := GetProcAddress(dll, 'ConfigurarPuerto');
-  if not Assigned(ConfigurarPuerto) then
-  begin
-    ShowMessage('Error al asignar funcion: ConfigurarPuerto');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "Conectar"
-  @Conectar := GetProcAddress(dll, 'Conectar');
-  if not Assigned(Conectar) then
-  begin
-    ShowMessage('Error al asignar funcion: Conectar');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ImprimirCierreX"
-  @ImprimirCierreX := GetProcAddress(dll, 'ImprimirCierreX');
-  if not Assigned(ImprimirCierreX) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirCierreX');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "ImprimirCierreZ"
-  @ImprimirCierreZ := GetProcAddress(dll, 'ImprimirCierreZ');
-  if not Assigned(ImprimirCierreZ) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirCierreZ');
-    Exit;
-  end;
-
-  @AbrirComprobante := GetProcAddress(dll, 'AbrirComprobante');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: AbrirComprobante');
-    Exit;
-  end;
-   @CerrarComprobante := GetProcAddress(dll, 'CerrarComprobante');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-     @Establecerencabezado := GetProcAddress(dll, 'EstablecerEncabezado');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-      @ConsultarEncabezado:= GetProcAddress(dll, 'EstablecerEncabezado');
-  if not Assigned(AbrirComprobante) then
-  begin
-    ShowMessage('Error al asignar funcion: CerrarComprobante');
-    Exit;
-  end;
-       @EnviarComando := GetProcAddress(dll, 'EnviarComando');
-  if not Assigned(EnviarComando) then
-  begin
-    ShowMessage('Error al asignar funcion: EnviarComando');
-    Exit;
-  end;
-
-  // obtener las referencias a funciones:  "Desconectar"
-  @Desconectar := GetProcAddress(dll, 'Desconectar');
-  if not Assigned(Desconectar) then
-  begin
-    ShowMessage('Error al asignar funcion: Desconectar');
-    Exit;
-  end;
-    @EstablecerCola := GetProcAddress(dll, 'EstablecerCola');
-  if not Assigned(EstablecerCola) then
-  begin
-    ShowMessage('Error al asignar funcion: EstablecerCola');
-    Exit;
-  end;
-      @CargarTextoExtra := GetProcAddress(dll, 'CargarTextoExtra');
-  if not Assigned(CargarTextoExtra) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarTextoExtra');
-    Exit;
-  end;
-     @ImprimirItem := GetProcAddress(dll, 'ImprimirItem');
-  if not Assigned(ImprimirItem) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirItem');
-    Exit;
-  end;
-       @CargarPago := GetProcAddress(dll, 'CargarPago');
-  if not Assigned(CargarPago) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarPago');
-    Exit;
-  end;
-
-         @ConsultarNumeroComprobanteActual := GetProcAddress(dll, 'ConsultarNumeroComprobanteActual');
-  if not Assigned(ConsultarNumeroComprobanteActual) then
-  begin
-    ShowMessage('Error al asignar funcion: ConsultarNumeroComprobanteActual');
-    Exit;
-  end;
-           @Consultarfechahora := GetProcAddress(dll, 'Consultarfechahora');
-  if not Assigned(ConsultarNumeroComprobanteActual) then
-  begin
-    ShowMessage('Error al asignar funcion: Consultarfechahora');
-    Exit;
-  end;
-
-             @ObtenerRespuestaExtendida:= GetProcAddress(dll, 'ObtenerRespuestaExtendida');
-  if not Assigned(ObtenerRespuestaExtendida) then
-  begin
-    ShowMessage('Error al asignar funcion: ObtenerRespuestaExtendida');
-    Exit;
-  end;
-               @CargarAjuste:= GetProcAddress(dll, 'CargarAjuste');
-  if not Assigned(Cargarajuste) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarAjuste');
-    Exit;
-  end;
-
-            @ImprimirTextoLibre:= GetProcAddress(dll, 'ImprimirTextoLibre');
-    if not Assigned(ImprimirTextoLibre) then
-  begin
-    ShowMessage('Error al asignar funcion: ImprimirTextoLibre');
-    Exit;
-  end;
-       @CargarDatosCliente:= GetProcAddress(dll, 'CargarDatosCliente');
-    if not Assigned(CargarDatosCliente) then
-  begin
-    ShowMessage('Error al asignar funcion: CargarDatosCliente');
-    Exit;
-  end;
-  @ConsultarNumeroComprobanteUltimo:= GetProcAddress(dll, 'ConsultarNumeroComprobanteUltimo');
-    if not Assigned(ConsultarNumeroComprobanteUltimo) then
-  begin
-    ShowMessage('Error al asignar funcion: ConsultarNumerocomprobanteultimo');
-    Exit;
-  end;
-
-
-
-
-
-
-
-
-
-  mayor := 0;
-  menor := 0;
-  mychar:=' ';
-  error := ConsultarVersionDll( str, 100, mayor, menor );
-  error := ConfigurarVelocidad( 9600 );
-  error := ConfigurarPuerto( ticket.puerto_com );
-  error := CerrarComprobante();
-  error := Conectar();
-  error:= ConsultarNumeroComprobanteUltimo('81',@respuesta,2000);
- if not ((respuesta='') or (respuesta='Ninguno') ) then
-      begin
-         ShowMessage('TICKET A!');
-         nro_comprobdigital:=strtoint(respuesta)+1;
-         copiadigital;
-         //abrircomprobante(2);
-      //---------------------------borrado encabezados y cola-----------------------//
-        comando:='';
-
-        error :=establecerencabezado (1, @comando[0]);
-        error :=establecerencabezado (2, @comando[0]);
-        error :=establecerencabezado (3, @comando[0]);
-        error :=establecerencabezado (4, @comando[0]);
-        error :=establecerencabezado (5, @comando[0]);
-        error :=establecerencabezado (6, @comando[0]);
-        error :=establecerencabezado (7, @comando[0]);
-        error :=establecerencabezado (8, @comando[0]);
-        error :=establecerencabezado (9, @comando[0]);
-        error :=establecerencabezado (10, @comando[0]);
-
-        error :=EstablecerCola (1, @comando[0]);
-        error :=EstablecerCola (2, @comando[0]);
-        error :=EstablecerCola (3, @comando[0]);
-        error :=EstablecerCola (4, @comando[0]);
-        error :=EstablecerCola (5, @comando[0]);
-        error :=EstablecerCola (6, @comando[0]);
-        error :=EstablecerCola (7, @comando[0]);
-        error :=EstablecerCola (8, @comando[0]);
-        error :=EstablecerCola (9, @comando[0]);
-        error :=EstablecerCola (10, @comando[0]);
-      //-----------------------------------------------------------------------------//
-      //----------------------cliente y vendedor----------------------------------------//
-
-         direccioncliente:=ticket.direccion;
-          if direccioncliente='' then
-           begin
-             ticket.direccion:=ticket.DESCRIPCIONCLIENTE;
-           end;
-
-         IF Ticket.CONDICIONIVA = 'RESPONSABLE MONOTRIBUTO' THEN
-         CODIGOIVA := 'M'
-         ELSE IF Ticket.CONDICIONIVA = 'RESPONSABLE NO INSCRIPTO' THEN
-          CODIGOIVA := 'N'
-         ELSE IF Ticket.CONDICIONIVA = 'EXENTO' THEN
-          CODIGOIVA := 'E'
-         ELSE IF Ticket.CONDICIONIVA = 'RESPONSABLE INSCRIPTO' THEN
-          CODIGOIVA := 'I'
-         ELSE IF Ticket.CONDICIONIVA = 'CONSUMIDOR FINAL' THEN
-          CODIGOIVA:= 'F';
-         {  I = Responsable Inscripto
-            N = No Responsable
-            M = Monotributista
-            E = Exento
-            U = No Categorizado
-            F = Consumidor Final
-            T = Monotributista Social
-            P = Monotributo Trabajador Independiente Promovido }
-
-
-
-
-        dnicliente:='';
-         if ticket.dni='' then
-           begin
-             ticket.dni:='1';
-
-           end;
-          if ticket.dni<>'' then
-           begin
-
-            ticket.dni:=trim(ticket.dni);
-
-           end;
-
-
-         ticket.CUIT:=trim(ticket.CUIT);
-         IF Ticket.CONDICIONIVA <> 'CONSUMIDOR FINAL' THEN
-         begin
-          comando:='';
-          texto:=strpcopy(comando,'0B01|0000|'+TICKET.DESCRIPCIONCLIENTE+'||'+TICKET.direccion+'|||T|'+ticket.CUIT+'|'+CODIGOIVA+'||||') ;
-          error :=enviarcomando(@comando[0]);
-
- //
-         end;
-         IF Ticket.CONDICIONIVA = 'CONSUMIDOR FINAL' THEN
-         begin
-          comando:='';
-          texto:=strpcopy(comando,'0B01|0000|'+TICKET.DESCRIPCIONCLIENTE+'||'+TICKET.direccion+'|||D|'+ticket.dni+'|'+CODIGOIVA+'||||') ;
-          error :=enviarcomando(@comando[0]);
-  //
-         end;
-
-//  error:=CargarComprobanteAsociado('');
-
-//-----------------------------------------------------------------------------//
-//----------------------Direccion fiscal----------------------------------------//
-  comando:='';
-  texto:=strpcopy(comando,'050E|0000|'+(ticket.direccionsucursal)) ;
-
-  error :=enviarcomando(@comando[0]);
-
- comando:='';
-
-
-
-//-------------------------------------------------------------------------------//
-//-----------------------------CARGA DE ITEMS------------------------------------//
-//-----------------------------CARGA DE ITEMS------------------------------------//
-  //--------------------------descuento general----------------------------------//
-        Gfacturador.DataSource.DataSet.First;
-        while not Gfacturador.DataSource.DataSet.Eof do
-          begin
-          if gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[22].FieldName).asfloat<>0 then
-               begin
-                  descripcion:=(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[1].FieldName).asstring);
-                  if (gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[18].FieldName).asstring)<>'' then
-                  BEGIN
-                  descripcion:='('+(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[18].FieldName).asstring)+')'+descripcion;
-                  END;
-
-
-
-                 descripcioncortada:=copy(descripcion, 0, 20);
-                 texto:=strpcopy(comando,descripcioncortada) ;
-                 texto:=strpcopy(precioep,floattostr((gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[24].FieldName).asfloat)*ticket.coeficientetarjeta)) ;
-
-                 error:= cargarajuste(400, comando, precioep, valorivaep, alfabetaep);
-
-                end;
-            Gfacturador.DataSource.DataSet.Next;
-
-          end;
-
-//----------------------------descuento general---------------------------------//
-
-
-
-//----------------------------PAGOS-----------------------------------------------//
-
-
-imp_efectivo:=floattostr(ticket.efectivo);
-imp_tarjeta:=floattostr(ticket.tarjeta);
-imp_cc:=floattostr(ticket.ctacte);
-imp_os:=floattostr(ticket.importecargoos);
-imp_co1:=floattostr(ticket.importecargoco1);
-imp_co2:=floattostr(ticket.importecargoco2);
-imp_ch:=floattostr(ticket.cheque);
-
-      if imp_efectivo='' then
-        begin
-          imp_efectivo:='0';
-        end;
-        if imp_tarjeta='' then
-         begin
-           imp_tarjeta:='0';
-         end;
-        if imp_cc='' then
-         begin
-           imp_cc:='0';
-         end;
-        if imp_os='' then
-         begin
-           imp_os:='0';
-         end;
-         if imp_co1='' then
-         begin
-           imp_co1:='0';
-         end;
-         if imp_co2='' then
-         begin
-           imp_co2:='0';
-         end;
-         if imp_ch='' then
-         begin
-           imp_ch:='0';
-         end;
-         if imp_cc='' then
-         begin
-           imp_cc:='0';
-         end;
-
-        afiliado:= strtofloat(imp_efectivo)+ strtofloat(imp_tarjeta)+strtofloat(imp_cc)+strtofloat(imp_ch);
-        if imp_efectivo<>'0' then
-        begin
-        monto:='';
-        texto:=strpcopy(monto,imp_efectivo) ;
-        comando:='';
-        texto:=strpcopy(comando,'') ;
-        error:= CargarPago(200,8,0,monto,'',comando,'','');
-        end;
-
-        if imp_tarjeta<>'0' then
-        begin
-
-        monto:='';
-        texto:=strpcopy(monto,imp_tarjeta) ;
-        comando:='';
-        texto:=strpcopy(comando,'Tarjeta '+ticket.codigotarjeta+': ') ;
-        error:= CargarPago(200,20,0,monto,'',comando,'','');
-        end;
-
-        if imp_cc<>'0' then
-        begin
-
-        monto:='';
-        texto:=strpcopy(monto,imp_cc) ;
-        comando:='';
-        texto:=strpcopy(comando,'CC '+ticket.codigocc+' '+ticket.nombrecc) ;
-        error:= CargarPago(200,6,0,monto,'',comando,'','');
-
-
-        end;
-        if imp_ch<>'0' then
-        begin
-
-         monto:='';
-        texto:=strpcopy(monto,imp_ch) ;
-        comando:='';
-        texto:=strpcopy(comando,'') ;
-        error:= CargarPago(200,3,0,monto,'',comando,'','');
-
-
-
-        end;
-        if imp_os<>'0' then
-        begin
-
-        monto:='';
-        texto:=strpcopy(monto,imp_os) ;
-        comando:='';
-        texto:=strpcopy(comando,ticket.nombre_os) ;
-        error:= CargarPago(200,99,0,monto,'',comando,'','');
-
-
-        end;
-        if imp_co1<>'0' then
-        begin
-
-        monto:='';
-        texto:=strpcopy(monto,imp_co1) ;
-        comando:='';
-        texto:=strpcopy(comando,ticket.nombre_co1) ;
-        error:= CargarPago(200,99,0,monto,'',comando,'','');
-
-
-
-        end;
-        if imp_co2<>'0' then
-        begin
-
-         monto:='';
-        texto:=strpcopy(monto,imp_co2) ;
-        comando:='';
-        texto:=strpcopy(comando,ticket.nombre_cos2) ;
-        error:= CargarPago(200,99,0,monto,'',comando,'','');
-        end;
-//----------------------------PAGOS-----------------------------------------------//
-//finalizacion ticket-------------------------------------------------------------//
-          comando:='';
-          texto:=strpcopy(comando,'Numero de ref:' +(ticket.valnroreferencia)) ;
-          error :=establecercola (1, @comando[0]);
-          if not (ticket.puntos_farmavalor='') or (ticket.puntos_farmavalor='0') then
-          begin
-          comando:='';
-          texto:=strpcopy(comando,'Puntos Farmavalor: '+(ticket.puntos_farmavalor)) ;
-          error :=establecercola (2, @comando[0]);
-          comando:='';
-          texto:=strpcopy(comando,'Los puntos se actualizan cada 24 hs') ;
-          error :=establecercola (3, @comando[0]);
-          end;
-//--------------------  PROMO -----------------------------------------------------------------------//
-      {  if ticket.Oespecial='S' then
-        BEGIN
-          TRY
-
-             if ticket.sumafarmacia<2000 then
-              begin
-                   if ticket.sumafarmacia>1000 then
-                      begin
-                      generarcuponoferta('126');
-                      ofecupon:='%5:  '
-                      end;
-              end;
-              if ticket.sumafarmacia>2000 then
-              begin
-                 generarcuponoferta('127');
-                 ofecupon:='%10:  '
-              end;
-              if cupon<>'' then
-              begin
-
-              texto:=strpcopy(comando,'Cupon oferta perfu '+ofecupon+cupon) ;
-              error :=establecercola (4, @comando[0]);
-              end;
-          EXCEPT
-
-          END;
-        END; }
-
-//--------------------  PROMO -----------------------------------------------------------------------//
-         respuesta:='';
-         tipcomprob:='';
-         texto:=strpcopy(tipcomprob,'81') ;
-         error:= ConsultarNumeroComprobanteActual(@respuesta,2000);
-         numeroc:=respuesta;
-         imprimi:=true;
-         if not ((numeroc='') or (numeroc='Ninguno')) then
-         begin
-         nro_comprob:=strtoint(respuesta);
-         respuesta:='';
-
-
-         ticket.fechafiscal:=(now);
-         ticket.numero_ticketfiscal:=nro_comprob;
-
-
-         error := CerrarComprobante();
-         end
-         else
-         imprimi:=False;
-         end;
-
-
-//-------------------borrado encabezado y cola------------------------------------------//
-  comando:='';
-
-  error :=establecerencabezado (1, @comando[0]);
-  error :=establecerencabezado (2, @comando[0]);
-  error :=establecerencabezado (3, @comando[0]);
-  error :=establecerencabezado (4, @comando[0]);
-  error :=establecerencabezado (5, @comando[0]);
-  error :=establecerencabezado (6, @comando[0]);
-  error :=establecerencabezado (7, @comando[0]);
-  error :=establecerencabezado (8, @comando[0]);
-  error :=establecerencabezado (9, @comando[0]);
-  error :=establecerencabezado (10, @comando[0]);
-
-  error :=EstablecerCola (1, @comando[0]);
-  error :=EstablecerCola (2, @comando[0]);
-  error :=EstablecerCola (3, @comando[0]);
-  error :=EstablecerCola (4, @comando[0]);
-  error :=EstablecerCola (5, @comando[0]);
-  error :=EstablecerCola (6, @comando[0]);
-  error :=EstablecerCola (7, @comando[0]);
-  error :=EstablecerCola (8, @comando[0]);
-  error :=EstablecerCola (9, @comando[0]);
-  error :=EstablecerCola (10, @comando[0]);
-
- //------------------------------------------------------------------------------------//
- comando:='';
- texto:=strpcopy(comando,'08F0|0001|081|'+inttostr(ticket.numero_ticketfiscal)) ;
- error:=enviarcomando(Comando);
- comando:='';
- texto:=strpcopy(comando,'08F6|0000') ;
- error:=enviarcomando(Comando);
-
-
-
- //----------------------------talon obras sociales-------------------------------------//
-
-             if (ticket.codigo_OS<>'') or (ticket.codigo_Co1<>'') or (ticket.codigo_Cos2<>'') then
-              begin
-
-              error := CerrarComprobante();
-
-
-              comando:='';
-              texto:=strpcopy(comando,'Vendedor: '+ticket.nom_vendedor) ;
-              error :=establecerencabezado (1, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Obra Social: '+ticket.codigo_OS+'-'+ticket.nombre_os) ;
-              error :=establecerencabezado (2, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Coseguro 1: '+ticket.codigo_Co1+'-'+ticket.nombre_co1) ;
-              error :=establecerencabezado (3, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Afiliado: '+ticket.afiliado_apellido+' '+ticket.afiliado_nombre) ;
-              error :=establecerencabezado (4, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Nro afiliado: '+ticket.afiliado_numero) ;
-              error :=establecerencabezado (5, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Mat. Med: '+ticket.medico_nro_matricula) ;
-              error :=establecerencabezado (6, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Receta: '+ticket.numero_receta) ;
-              error :=establecerencabezado (7, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'Numero de ref: '+ticket.valnroreferencia) ;
-              error :=establecerencabezado (9, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'REC: '+FLOATTOSTR(ticket.importebruto)+'     OS: '+floattostr(roundto(strtofloat(imp_os),-2)) );
-              error :=establecercola (1, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'CO1: '+imp_co1+' CO2: '+imp_co2+' AFI: '+floattostr(roundto(afiliado,-2))) ;
-              error :=establecercola (2, @comando[0]);
-              comando:='';
-              texto:=strpcopy(comando,'EF: '+floattostr(roundto(strtofloat(IMP_EFECTIVO),-2))+' CH: '+floattostr(roundto(strtofloat(imp_ch),-2))+' CC: '+floattostr(roundto(strtofloat(imp_cc),-2))+' TJ: '+floattostr(roundto(strtofloat(imp_TARJETA),-2)) );
-              error :=establecercola (3, @comando[0]);
-
-              error := abrircomprobante(21);
-
-              comando:='';
-              texto:=strpcopy(comando,'DOCUMENTO NO FISCAL FARMACIAS') ;
-              error :=ImprimirTextoLibre(comando);
-              comando:='';
-              texto:=strpcopy(comando,'NRO TICKET: '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-              error :=ImprimirTextoLibre(comando);
-              comando:='';
-              texto:=strpcopy(comando,'--------------------------------------------------') ;
-              error :=ImprimirTextoLibre(comando);
-
-              Gfacturador.DataSource.DataSet.First;
-
-              while not Gfacturador.DataSource.DataSet.Eof do
-              begin
-                    descripcion:=(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[1].FieldName).asstring);
-                    descripcioncortada:=copy(descripcion, 0, 20);
-
-                    comando:='';
-                    texto:=strpcopy(comando,(descripcioncortada)+'('+(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[3].FieldName).asstring)+')  '+floattostr(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[2].FieldName).asfloat)) ;
-                    error :=ImprimirTextoLibre(comando);
-                    comando:='';
-                    texto:=strpcopy(comando,' ') ;
-                    error :=ImprimirTextoLibre(comando);
-
-                    Gfacturador.DataSource.DataSet.Next;
-              end;
-
-              error := CerrarComprobante();
-              if ticket.codigo_os<>'' then
-              begin
-                z:=z+1
-              end;
-                if ticket.codigo_Co1<>'' then
-              begin
-                z:=z+1
-              end;
-              comando:='';
-              if z>1 then
-                begin
-                    error := CerrarComprobante();
-
-
-                    comando:='';
-                    texto:=strpcopy(comando,'Vendedor: '+ticket.nom_vendedor) ;
-                    error :=establecerencabezado (1, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Obra Social: '+ticket.codigo_OS+'-'+ticket.nombre_os) ;
-                    error :=establecerencabezado (2, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Coseguro 1: '+ticket.codigo_Co1+'-'+ticket.nombre_co1) ;
-                    error :=establecerencabezado (3, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Afiliado: '+ticket.afiliado_apellido+' '+ticket.afiliado_nombre) ;
-                    error :=establecerencabezado (4, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Nro afiliado: '+ticket.afiliado_numero) ;
-                    error :=establecerencabezado (5, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Mat. Med: '+ticket.medico_nro_matricula) ;
-                    error :=establecerencabezado (6, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Receta: '+ticket.numero_receta) ;
-                    error :=establecerencabezado (7, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'Numero de ref: '+ticket.valnroreferencia) ;
-                    error :=establecerencabezado (9, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'REC: '+FLOATTOSTR(ticket.importebruto)+'     OS: '+floattostr(roundto(strtofloat(imp_os),-2)) );
-                    error :=establecercola (1, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'CO1: '+imp_co1+' CO2: '+imp_co2+' AFI: '+floattostr(roundto(afiliado,-2))) ;
-                    error :=establecercola (2, @comando[0]);
-                    comando:='';
-                    texto:=strpcopy(comando,'EF: '+floattostr(roundto(strtofloat(IMP_EFECTIVO),-2))+' CH: '+floattostr(roundto(strtofloat(imp_ch),-2))+' CC: '+floattostr(roundto(strtofloat(imp_cc),-2))+' TJ: '+floattostr(roundto(strtofloat(imp_TARJETA),-2)) );
-                    error :=establecercola (3, @comando[0]);
-
-                    error := abrircomprobante(21);
-
-                    comando:='';
-                    texto:=strpcopy(comando,'DOCUMENTO NO FISCAL FARMACIAS') ;
-                    error :=ImprimirTextoLibre(comando);
-                    comando:='';
-                    texto:=strpcopy(comando,'NRO TICKET: '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-                    error :=ImprimirTextoLibre(comando);
-                    comando:='';
-                    texto:=strpcopy(comando,'--------------------------------------------------') ;
-                    error :=ImprimirTextoLibre(comando);
-
-                    Gfacturador.DataSource.DataSet.First;
-
-                    while not Gfacturador.DataSource.DataSet.Eof do
-                    begin
-                          descripcion:=(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[1].FieldName).asstring);
-                          descripcioncortada:=copy(descripcion, 0, 20);
-
-                          comando:='';
-                          texto:=strpcopy(comando,(descripcioncortada)+'('+(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[3].FieldName).asstring)+')  '+floattostr(gfacturador.DataSource.DataSet.FieldByName(Gfacturador.Columns[2].FieldName).asfloat)) ;
-                          error :=ImprimirTextoLibre(comando);
-                          comando:='';
-                          texto:=strpcopy(comando,' ') ;
-                          error :=ImprimirTextoLibre(comando);
-
-                          Gfacturador.DataSource.DataSet.Next;
-                    end;
-
-                    error := CerrarComprobante();
-
-
-
-              end;
-
-
-
-
-
-
-              end;
-
-  comando:='';
-
-  error :=establecerencabezado (1, @comando[0]);
-  error :=establecerencabezado (2, @comando[0]);
-  error :=establecerencabezado (3, @comando[0]);
-  error :=establecerencabezado (4, @comando[0]);
-  error :=establecerencabezado (5, @comando[0]);
-  error :=establecerencabezado (6, @comando[0]);
-  error :=establecerencabezado (7, @comando[0]);
-  error :=establecerencabezado (8, @comando[0]);
-  error :=establecerencabezado (9, @comando[0]);
-  error :=establecerencabezado (10, @comando[0]);
-
-  error :=EstablecerCola (1, @comando[0]);
-  error :=EstablecerCola (2, @comando[0]);
-  error :=EstablecerCola (3, @comando[0]);
-  error :=EstablecerCola (4, @comando[0]);
-  error :=EstablecerCola (5, @comando[0]);
-  error :=EstablecerCola (6, @comando[0]);
-  error :=EstablecerCola (7, @comando[0]);
-  error :=EstablecerCola (8, @comando[0]);
-  error :=EstablecerCola (9, @comando[0]);
-  error :=EstablecerCola (10, @comando[0]);
-
-
-
- if TICKET.llevavale='SI' then
-        BEGIN
-
-          error := CerrarComprobante();
-
-
-
-          comando:='';
-          texto:=strpcopy(comando,'Vendedor: '+ticket.nom_vendedor) ;
-          error :=establecerencabezado (1, @comando[0]);
-
-          if (ticket.nombre_os='') and (ticket.nombre_co1<>'') then
-          begin
-          comando:='';
-          texto:=strpcopy(comando,'Obra Social: '+ticket.codigo_OS+'-'+ticket.nombre_os) ;
-          error :=establecerencabezado (2, @comando[0]);
-          end;
-
-          if (ticket.nombre_os='') and (ticket.nombre_co1<>'') then
-          begin
-          comando:='';
-          texto:=strpcopy(comando,'Afiliado: '+ticket.afiliado_apellido+' '+ticket.afiliado_nombre) ;
-          error :=establecerencabezado (4, @comando[0]);
-
-          end;
-          if (ticket.nombre_os<>'') then
-          begin
-          comando:='';
-          texto:=strpcopy(comando,'Afiliado: '+ticket.afiliado_apellido+' '+ticket.afiliado_nombre) ;
-          error :=establecerencabezado (4, @comando[0]);
-          comando:='';
-          texto:=strpcopy(comando,'Nro afiliado: '+ticket.afiliado_numero) ;
-          error :=establecerencabezado (5, @comando[0]);
-
-          end;
-          comando:='';
-          texto:=strpcopy(comando,'REC: '+FLOATTOSTR(ticket.importebruto)+'     OS: '+floattostr(roundto(strtofloat(imp_os),-2)) );
-          error :=establecercola (1, @comando[0]);
-          comando:='';
-          texto:=strpcopy(comando,'CO1: '+imp_co1+' CO2: '+imp_co2+' AFI: '+floattostr(roundto(afiliado,-2))) ;
-          error :=establecercola (2, @comando[0]);
-          comando:='';
-          texto:=strpcopy(comando,'EF: '+floattostr(roundto(strtofloat(IMP_EFECTIVO),-2))+' CH: '+floattostr(roundto(strtofloat(imp_ch),-2))+' CC: '+floattostr(roundto(strtofloat(imp_cc),-2))+' TJ: '+floattostr(roundto(strtofloat(imp_TARJETA),-2)) );
-          error :=establecercola (3, @comando[0]);
-          comando:='';
-
-          error := abrircomprobante(21);
-
-          texto:=strpcopy(comando,'--------------------------------------------------') ;
-          error :=ImprimirTextoLibre(comando);
-          comando:='';
-          texto:=strpcopy(comando,'Emision VR'+ticket.fiscla_pv+': '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-          error :=ImprimirTextoLibre(comando);
-
-          Gfacturador.DataSource.DataSet.First;
-
-          while not Gfacturador.DataSource.DataSet.Eof do
-          begin
-               if Gfacturador.Fields[17].AsSTRING='SI' then
-               BEGIN
-                comando:='';
-                texto:=strpcopy(comando,Gfacturador.Fields[1].AsSTRING) ;
-                error :=ImprimirTextoLibre(comando);
-                comando:='';
-                texto:=strpcopy(comando,'Unidades Vale:'+(Gfacturador.Fields[18].AsSTRING)) ;
-                error :=ImprimirTextoLibre(comando);
-
-               END;
-               Gfacturador.DataSource.DataSet.Next;
-          end;
-          comando:='';
-          texto:=strpcopy(comando,'REF. CPBT. '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-          error :=ImprimirTextoLibre(comando);
-
-           texto:=strpcopy(comando,'-----CORTAR-------------CORTAR------------CORTAR------------CORTAR------------️') ;
-          error :=ImprimirTextoLibre(comando);
-          comando:='';
-          texto:=strpcopy(comando,'Emision VR'+ticket.fiscla_pv+': '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-          error :=ImprimirTextoLibre(comando);
-
-          Gfacturador.DataSource.DataSet.First;
-
-          while not Gfacturador.DataSource.DataSet.Eof do
-          begin
-               if Gfacturador.Fields[17].AsSTRING='SI' then
-               BEGIN
-                comando:='';
-                texto:=strpcopy(comando,Gfacturador.Fields[1].AsSTRING) ;
-                error :=ImprimirTextoLibre(comando);
-                comando:='';
-                texto:=strpcopy(comando,'Unidades Vale:'+(Gfacturador.Fields[18].AsSTRING)) ;
-                error :=ImprimirTextoLibre(comando);
-
-               END;
-               Gfacturador.DataSource.DataSet.Next;
-          end;
-          comando:='';
-          texto:=strpcopy(comando,'REF. CPBT. '+ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8))) ;
-          error :=ImprimirTextoLibre(comando);
-          comando:='';
-          texto:=strpcopy(comando,'-----CORTAR-------------CORTAR------------CORTAR------------CORTAR------------') ;
-          error :=ImprimirTextoLibre(comando);
-
-
-        error := CerrarComprobante();
-
-        END;
-
-
- //----------------------------talon obras sociales-------------------------------------//
- error := Desconectar();
- FreeLibrary(dll);
-          if imprimi<>false then
-            begin
-            imprimi:=true;
-            end;
-
-
-
-
-//finalizacion ticket-------------------------------------------------------------//
-
-
-
-end;
-
-
 
 
 
@@ -3823,13 +2422,10 @@ iva: double;
  stockparcial: integer;
  conteo:integer;
 
- pagoCheque:TPagoChequeService;
-
 begin
 
 
   ticket.nroticketadicional:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
-
 
 
 
@@ -3843,7 +2439,6 @@ begin
             dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
             dmfacturador.icomprobante.Close;
             dmfacturador.icomprobante.SQL.Clear;
-
 
             dmfacturador.icomprobante.Close;
             dmfacturador.icomprobante.SQL.Text:=concat('INSERT INTO VTMACOMPROBEMITIDO                                 ',
@@ -4004,7 +2599,7 @@ begin
         dmfacturador.icomprobante.ParamByName('CODAUTORIZACION').AsString:='0';
         end;
 
-        dmfacturador.icomprobante.Open;
+        dmfacturador.icomprobante.ExecSQL;
         dmfacturador.ticomprobante.Commit;
 
 
@@ -4012,9 +2607,7 @@ begin
 
 
 
-
  //INSTERTAR VTMADETALLECOMPROB -----------------------------------------// VR
-
 
 
   if dmfacturador.ticomprobante.InTransaction then
@@ -4132,10 +2725,12 @@ while not Gfacturador.DataSource.DataSet.Eof do
     BEGIN
     dmfacturador.icomprobante.ParamByName('modificado').AsString:='N';
     END;
-    dmfacturador.icomprobante.Open;
-    dmFacturador.ticomprobante.Commit;
+    dmfacturador.icomprobante.ExecSQL;
     Gfacturador.DataSource.DataSet.Next;
     end;
+
+    dmFacturador.ticomprobante.Commit;
+
 
 
 
@@ -4221,117 +2816,12 @@ Begin
   dmfacturador.ticomprobante.Commit;
   End;
 
-
-
-
- //INSERTAR VTTBPAGOCHEQUE          --VR LLEVA TODOS LOS MEDIOS DE PAGO
-
-if TICKET.cheque<>0 then
-begin
-    pagoCheque:= TpagoChequeService.Create;
-    pagoCheque.procesarPagoCheque(ticket,nro_comprob);
-    pagoCheque.Free;
-end;
-
-//INSTERTAR VTTPAGOCTACTE
-
-if TICKET.ctacte<>0 then
-        begin
-         if dmfacturador.ticomprobante.InTransaction  then
-        dmfacturador.ticomprobante.Rollback;
-
-        dmfacturador.ticomprobante.StartTransaction;
-        dmfacturador.icomprobante.Database:=dmFacturador.getConexion;
-
-        dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Clear;
-
-
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Text:=concat(' INSERT INTO VTTBPAGOCTACTE ',
-                                                   '(NRO_SUCURSAL, TIP_COMPROBANTE, NRO_COMPROBANTE, COD_CTACTE, COD_SUBCTA, COD_AUTORIZACTA, IMP_CTACTE, IMP_SALDO, ',
-                                                   ' MAR_RESUMIDO, NRO_SUCURSAL_LIQ, NRO_LIQUIDACION, CAN_CUOTAS, CAN_CUOTASPEN, POR_IVA, CODIGOPAGO) ',
-                                                   ' VALUES (:NRO_SUCURSAL,:TIP_COMPROBANTE , :NRO_COMPROB, :COD_CTACTE, :COD_SUBCTA, '''', :IMP_CTACTE, :IMP_SCTACTE, ''N'', 0, NULL, 0, 0, NULL, NULL)');
-
-
-        dmfacturador.icomprobante.ParamByName('NRO_SUCURSAL').AsString:=ticket.sucursal;
-        dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=TICKET.comprobante;
-        dmfacturador.icomprobante.ParamByName('nro_comprob').AsString:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
-        dmfacturador.icomprobante.ParamByName('COD_CTACTE').AsString:=ticket.codigocc;
-        dmfacturador.icomprobante.ParamByName('cod_subcta').AsString:=ticket.codigosubcc;
-        dmfacturador.icomprobante.ParamByName('imp_ctacte').AsFloat:=TICKET.ctacte;
-        dmfacturador.icomprobante.ParamByName('imp_sctacte').AsFloat:=TICKET.ctacte;
-        dmfacturador.icomprobante.Open;
-        dmfacturador.ticomprobante.Commit;
-
-end;
-
-//INSERTAR VTTPAGOEFECTIVO
-
- if TICKET.efectivO<>0 then
-        begin
-         if dmfacturador.ticomprobante.InTransaction  then
-        dmfacturador.ticomprobante.Rollback;
-
-        dmfacturador.ticomprobante.StartTransaction;
-        dmfacturador.icomprobante.Database:=dmFacturador.getConexion;
-
-        dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Clear;
-
-
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Text:=concat('INSERT INTO VTTBPAGOEFECTIVO (NRO_SUCURSAL, TIP_COMPROBANTE, NRO_COMPROBANTE, COD_MONEDA, IMP_EFECTIVO, IMP_COTIZ, POR_IVA)',
-                                                   ' VALUES (:NRO_SUCURSAL, :TIP_COMPROBANTE, :NRO_COMPROBANTE, ''$'', :IMP_EFECTIVO, NULL, NULL)');
-
-
-        dmfacturador.icomprobante.ParamByName('NRO_SUCURSAL').AsString:=ticket.sucursal;
-        dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=TICKET.comprobante;
-        dmfacturador.icomprobante.ParamByName('nro_comprobANTE').AsString:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
-        dmfacturador.icomprobante.ParamByName('imp_EFECTIVO').AsFloat:=TICKET.efectivO;
-        dmfacturador.icomprobante.Open;
-        dmfacturador.ticomprobante.Commit;
-
-        end;
+  // Registramos las formas de pago
+  registrarFormaDePagoTicket;
 
 
 
 
-
- //INSERTAR VTTBPAGOTARJETA
-
-
- if TICKET.tarjeta<>0 then
-        begin
-         if dmfacturador.ticomprobante.InTransaction  then
-        dmfacturador.ticomprobante.Rollback;
-
-        dmfacturador.ticomprobante.StartTransaction;
-        dmfacturador.icomprobante.Database:=dmFacturador.getConexion;
-
-        dmfacturador.icomprobante.Transaction:=dmFacturador.ticomprobante;
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Clear;
-
-
-        dmfacturador.icomprobante.Close;
-        dmfacturador.icomprobante.SQL.Text:=concat(' INSERT INTO VTTBPAGOTARJETA (NRO_SUCURSAL, TIP_COMPROBANTE, NRO_COMPROBANTE, COD_TARJETA, NRO_TARJETA, COD_MONEDA, NRO_CUPON, ',
-                                                   ' IMP_TARJETA, IMP_COTIZ, NRO_CUOTA, NRO_AUTORIZACION, NRO_LIQUIDACION, FEC_VENCIMIENTO, NRO_PIN, POR_IVA, CODIGOPAGO)',
-                                                   ' VALUES (:NRO_SUCURSAL, :TIP_COMPROBANTE, :NRO_COMPROBANTE, :COD_TARJETA, ''0'', ''$'', NULL, :IMP_TARJETA, NULL, 0, 0, NULL, CURRENT_DATE , 0, NULL, NULL)');
-
-
-
-        dmfacturador.icomprobante.ParamByName('NRO_SUCURSAL').AsString:=ticket.sucursal;
-        dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=TICKET.comprobante;
-        dmfacturador.icomprobante.ParamByName('nro_comprobANTE').AsString:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
-        dmfacturador.icomprobante.ParamByName('COD_TARJETA').AsString:=ticket.codigotarjeta;
-        dmfacturador.icomprobante.ParamByName('imp_tarjeta').AsFloat:=TICKET.tarjeta;
-        dmfacturador.icomprobante.Open;
-        dmfacturador.ticomprobante.Commit;
-
-        end;
 
 
 

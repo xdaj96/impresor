@@ -7,7 +7,7 @@ interface
 
      public
      procedure iniciarTransaccion;
-     procedure insertarPago(cheque:TPagoCheque);
+     procedure insertar(cheque:TPagoCheque);
      procedure Commit;
      procedure Rollback;
   end;
@@ -25,16 +25,16 @@ implementation
         dmfacturador.icomprobante.SQL.Clear;
      end;
 
-     procedure TPagoChequeDAO.insertarPago(cheque:TPagoCheque);
+     procedure TPagoChequeDAO.insertar(cheque:TPagoCheque);
      begin
        dmfacturador.icomprobante.SQL.Text:=concat(' INSERT INTO VTTBPAGOCHEQUE (NRO_SUCURSAL, TIP_COMPROBANTE, NRO_COMPROBANTE, COD_BANCO, COD_CTA, NRO_CHEQUE, IMP_CHEQUE) VALUES (:sucursal,:tip_comprobante, :nro_comprobante, :cod_banco, '''', :nro_cheque, :importe_cheque);');
-       dmfacturador.icomprobante.ParamByName('SUCURSAL').AsString:=cheque.nro_sucursal;
-       dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=cheque.tip_comprobante;
-       dmfacturador.icomprobante.ParamByName('nro_comprobante').AsString:=cheque.nro_comprobante;
+       dmfacturador.icomprobante.ParamByName('SUCURSAL').AsString:=cheque.NroSucursal;
+       dmfacturador.icomprobante.ParamByName('TIP_COMPROBANTE').AsString:=cheque.TipComprobante;
+       dmfacturador.icomprobante.ParamByName('nro_comprobante').AsString:=cheque.NroComprob;
        dmfacturador.icomprobante.ParamByName('cod_banco').AsString:=cheque.cod_banco;
        dmfacturador.icomprobante.ParamByName('nro_cheque').AsString:=cheque.nro_cheque;
        dmfacturador.icomprobante.ParamByName('importe_cheque').AsFloat:=cheque.importe;
-          dmfacturador.icomprobante.Open;
+       dmfacturador.icomprobante.Open;
      end;
 
 

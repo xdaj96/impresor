@@ -1,0 +1,46 @@
+unit uPagoCtaCteService;
+
+interface
+  uses sysUtils,uPagoEfectivoDAO,uPagoEfectivo,uFormaPagoService,uBaseFormaPago;
+
+ type TPagoCtaCteService = class(TFormaPagoService)
+  private
+    pagoDAO:TPagoEfectivoDAO;
+  public
+    procedure registrarFormaPago(formaPago:TBaseFormaPago);override;
+    constructor Create;
+
+ end;
+implementation
+
+
+
+
+constructor TPagoCtaCteService.Create;
+begin
+   pagoDAO:= TPagoEfectivoDAO.Create;
+end;
+
+procedure TPagoCtaCteService.registrarFormaPago(formaPago:TBaseFormaPago);
+begin
+
+  if not (formaPago is TPagoEfectivo) then
+     raise Exception.Create('La forma de pago ingresada no es cuenta corriente');
+
+  try
+      pagoDAO.iniciarTransaccion;
+      pagoDAO.insertar(TPagoEfectivo(formaPago));
+      pagoDAO.commit;
+   except
+    on E:Exception do
+    begin
+      pagoDAO.rollback;
+      raise Exception.Create('No se pudo registrar el pago en la cuenta corrente:'+E.Message);
+    end;
+
+   end
+
+end;
+
+
+end.

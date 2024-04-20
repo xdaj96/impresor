@@ -1,0 +1,13 @@
+unit uPagoEfectivo;
+
+interface
+  uses ubaseFormaPago;
+
+  type TPagoEfectivo = class(TBaseFormaPago)
+  private
+    FImpEfectivo:double;
+
+  end;
+implementation
+
+end.

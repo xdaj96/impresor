@@ -581,7 +581,7 @@ begin
 
     // -------------------borrado encabezado y cola------------------------------------------//
     fiscalEpson.borrarEncabezadoYCola;
-    sleep(5000);
+
     verificarPapel;
 
     if ImprimiParteTK and reimpresion then
@@ -651,13 +651,13 @@ begin
 
     if ticket.llevavale = 'SI' then
     BEGIN
-
-      error := fiscalEpson.cerrarComprobante();
       verificarPapel;
+      error := fiscalEpson.cerrarComprobante();
+
       crearTicketVale;
       if ticket.vale = 'S' then
       BEGIN
-        verificarPapel;
+
         crearTicketVale;
 
       END;

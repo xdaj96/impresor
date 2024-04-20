@@ -66,7 +66,8 @@ interface
   mayor : LongInt;
   menor : LongInt;
   mychar: char;
-
+  comando: Array[0..200] of AnsiChar;
+  texto:string;
   ConfigurarVelocidad: TConfigurarVelocidad;
   ConfigurarPuerto: TConfigurarPuerto;
   Conectar: TConectar;
@@ -101,6 +102,7 @@ interface
   function cerrarComprobante():LongInt;
   function tienePapel():boolean;
   function tieneLaTapaCerrada():boolean;
+  procedure imprimirZ;
   procedure configurarImpresor(ticket:TTicket);
   procedure borrarEncabezadoYCola;
   procedure imprimirCodigoDeBarras(barcode:string);
@@ -350,6 +352,23 @@ end;
    error := Conectar();
 
  end;
+
+ procedure TFiscalEpson.imprimirZ;
+ begin
+        mayor := 0;
+        menor := 0;
+        mychar:=' ';
+        error := CerrarComprobante();
+        error := Conectar();
+        comando:='';
+        texto:=strpcopy(comando,'0801|0C00') ;
+        error := enviarcomando(@comando[0]);
+
+
+        error := Desconectar();
+
+ end;
+
 
  procedure TFiscalEpson.borrarEncabezadoYCola;
  var
