@@ -1,0 +1,15 @@
+unit uBaseFormaPago;
+
+interface
+ type TBaseFormaPago = class
+   private
+
+   public
+   property NroSucursal    :string read FNroSucursal     write FNroSucursal;
+    property TipComprobante :string read FTipComprobante  write FTipComprobante;
+    property NroComprob     :string read FNroComprob      write FNroComprob;
+
+ end;
+implementation
+
+end.

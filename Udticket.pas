@@ -1,7 +1,7 @@
 unit Udticket;
 
 interface
-            uses Classes, system.Generics.collections, Xml.xmldom, Xml.XMLIntf, Xml.XMLDoc, MSXML, udmfacturador;
+            uses Classes, system.Generics.collections, Xml.xmldom, Xml.XMLIntf, Xml.XMLDoc, MSXML, udmfacturador,uDetalleTicket;
 
 Type
 
@@ -21,7 +21,9 @@ end;
     cod_barras:String;
     cod_troquel:String;
     cod_alfabeta:String;
+    nom_largo:string;
     importe_unitario:Double;
+
     cantidad:Integer;
     porcentaje_cobertura:Double;
     importe_cobertura:Double;
@@ -217,7 +219,7 @@ end;
     items:  TList;
     itemsval: tlist;
     itemsonline: tlist;
-
+    detalleFac:TList<TDetalleFactura>;
 
 
 //----datosvalidacion //

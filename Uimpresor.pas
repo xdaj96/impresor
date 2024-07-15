@@ -5,8 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.ExtCtrls, registry,
-  Vcl.Grids, Vcl.ValEdit, Vcl.StdCtrls, Vcl.Buttons, Vcl.DBGrids, Vcl.FileCtrl,
-  Data.DB, Datasnap.DBClient,  Xml.xmldom, Xml.XMLIntf,uPagoChequeService, uUtils,
+  Vcl.Grids, Vcl.ValEdit, Vcl.StdCtrls, Vcl.Buttons, Vcl.DBGrids, Vcl.FileCtrl,  uDetalleTicket,
+  Data.DB, Datasnap.DBClient,  uPagoChequeService, uUtils,Xml.xmldom, Xml.XMLIntf,uTicketService,
   msxmldom, xml.xmldoc, udticket, Vcl.OleCtrls, FiscalPrinterLib_TLB, system.Win.ComObj, math,
   Vcl.Menus, Vcl.AppEvnts,uBaseTicket,uTicketTEpson,uTicketBEpson,uTicketAEpson,ufBuscarTK,
 
@@ -114,11 +114,13 @@ type
      nIntentos:integer;
     ultTipComprob:string;
     archivo: string;
+    ticketService:TTicketService;
     procedure crearComprobanteImpresion;
 
     procedure registrarPago(pagoService: TFormaPagoService; unCompPago: TBaseFormaPago);
 
     procedure registrarFormaDePagoTicket;
+    procedure cargarGridDetalleTicket;
 
 
 
@@ -160,6 +162,71 @@ begin
   else
   begin
     ShowMessage('La aplicación no se encontró.');
+  end;
+end;
+
+procedure Tfimpresor.cargarGridDetalleTicket;
+var
+  itemTicket: TDetalleFactura;
+begin
+  for itemTicket in ticket.detalleFac do
+  begin
+    //ITEMVAL:=DETALLEVAL.ChildNodes[v];
+    cdsdetalle.Append;
+    //cdsdetallenroitem.AsString:=itemval.ChildNodes['NroItem'].Text;
+
+    //--------- DATOS DEL PRODUCTO-----------------------------//
+    cdsdetalleitem.Asstring := itemTicket.NroItem;
+    cdsdetallenro_troquel.Asstring := itemTicket.NroTroquel;
+    cdsdetallenom_largo.Asstring := itemTicket.NomLargo;
+    cdsdetalleprecio.Asstring := itemTicket.Precio;
+    cdsdetallecantidad.Asstring := itemTicket.Cantidad;
+    cdsdetallecod_alfabeta.Asstring := itemTicket.CodAlfabeta;
+    cdsdetallecod_barraspri.Asstring := itemTicket.CodBarrasPri;
+    cdsdetallecod_laboratorio.Asstring := itemTicket.CodLaboratorio;
+    cdsdetallecan_stk.Asstring := itemTicket.CanStk;
+    cdsdetalletamano.Asstring := itemTicket.Tamano;
+    cdsdetallerubro.Asstring := itemTicket.Rubro;
+
+    //--------- DATOS DEL PRODUCTO-----------------------------//
+
+    cdsdetallecod_iva.Asstring := itemTicket.CodIVA;
+
+    //--------- PORCENTAJES -----------------------------------//
+    cdsdetalleporcentaje.Asstring := itemTicket.Porcentaje;
+    cdsdetalleporcentajeos.Asstring := itemTicket.PorcentajeOS;
+    cdsdetalleporcentajeco1.Asstring := itemTicket.PorcentajeCO1;
+    cdsdetalleporcentajeco2.Asstring := itemTicket.PorcentajeCO2;
+    cdsdetallegentileza.Asstring := itemTicket.Gentileza;
+
+    //--------- PORCENTAJES -----------------------------------//
+
+    //--------- VALES -----------------------------------//
+    cdsdetallevale.Asstring := itemTicket.Vale;
+    cdsdetallecan_vale.Asstring := itemTicket.CanVale;
+    //--------- VALES -----------------------------------//
+
+
+    //--------- DESCUENTOS -----------------------------------//
+    cdsdetalledescuentos.Asstring := itemTicket.Descuentos;
+    cdsdetalledescuentosos.Asstring := itemTicket.DescuentosOS;
+    cdsdetalledescuentoco1.Asstring := itemTicket.DescuentoCO1;
+    cdsdetalledescuentoco2.Asstring := itemTicket.DescuentoCO2;
+
+   //--------- DESCUENTOS -----------------------------------//
+
+    //--------- IMPORTES -----------------------------------//
+    cdsdetalleimportegent.Asstring := itemTicket.ImporteGent;
+    cdsdetallemodificado.Asstring := itemTicket.Modificado;
+    cdsdetalleprecio_totaldesc.Asstring := itemTicket.PrecioTotalDesc;
+    cdsdetalleprecio_total.Asstring := itemTicket.PrecioTotal;
+
+    //--------- IMPORTES -----------------------------------//
+
+
+    cdsdetallecodautorizacion.Asstring := itemTicket.CodAutorizacion;
+
+
   end;
 end;
 
@@ -423,7 +490,6 @@ procedure Tfimpresor.binsertarClick(Sender: TObject);
 var
 archivoxmlval: txmldocument;
 encabezadoval,rtaval,nrorefval,detalleval,
-ITEMVAL,BARRASVAL,TROQUELVAL,DESCRIPCIONVAL,RTAPRODUCTO,CANTIDADVAL,PORCENTAJEVAL,IMPORTEUNITARIOVAL,IMPORTEAFIVAL,IMPORTECOBERVAL:ixmlnode;
 flag: integer;
 I: INTEGER;
 v: integer;
@@ -447,119 +513,23 @@ begin
 //  Reg.RootKey := HKEY_CURRENT_USER;
  contador.Enabled:=false;
  btnReimprimir.Enabled:= false;
- sleep(1000);
+ sleep(100);
 for I := 0 to flist.Items.Count -1 do
     begin
     Reg := TRegistry.Create;
     Reg.RootKey := HKEY_CURRENT_USER;
     Reg.OpenKey(regKey,true);
     dmFacturador.AbrirConexion();
-
+    ITEMsVAL:=TTicketItemval.Create;
 
                 blimpiartodo.Click;
                 archivo:=flist.Items[i];
                 archivoxmlval:= TXMLDocument.Create(Application);
-                archivoxmlval.LoadFromFile (path+archivo);
-                archivoxmlval.Active:=true;
-                archivoxmlval.DocumentElement.ChildNodes.Count;
-                encabezadoval:=archivoxmlval.DocumentElement.ChildNodes[0];
-                encabezadoval.ChildNodes.Count;
 
-                ITEMsVAL:=TTicketItemval.Create;
-                TICKET.nrocomprobantenf:=encabezadoval.ChildNodes['NROTK'].text;
-                ticket.comprobante:=encabezadoval.ChildNodes['tipo_comprobante'].text;
-                ticket.tip_comprobante:=encabezadoval.ChildNodes['tipo_comprobantefiscal'].text;
-                ticket.cod_vendedor:=encabezadoval.ChildNodes['NRO_VENDEDOR'].Text;
-                ticket.nom_vendedor:=encabezadoval.ChildNodes['nombre_vendedor'].Text;
-                ticket.direccionsucursal:=encabezadoval.ChildNodes['direccion_sucursal'].Text;
-                ticket.fechafiscal:=strtodate(encabezadoval.ChildNodes['fecha_comprobante'].Text);
-                ticket.cod_cliente:=encabezadoval.ChildNodes['codigo_cliente'].Text;
-                ticket.direccion:=encabezadoval.ChildNodes['direccion_cliente'].Text;
-                ticket.CONDICIONIVA:=encabezadoval.ChildNodes['responsableiva'].Text;
-                ticket.Cuit:=encabezadoval.ChildNodes['cuit'].Text;
-                ticket.DESCRIPCIONCLIENTE:=encabezadoval.ChildNodes['DESCRIPCIONCLIENTE'].Text;
-                ticket.codigocc:=encabezadoval.ChildNodes['codigo_cc'].Text;
-                ticket.nombrecc:=encabezadoval.ChildNodes['nombre_cc'].Text;
-                ticket.codigotarjeta:=encabezadoval.ChildNodes['codigo_tj'].Text;
-                ticket.codigocheque:=encabezadoval.ChildNodes['codigo_ch'].Text;
-                ticket.numerocheque:=encabezadoval.ChildNodes['numero_ch'].Text;
-                ticket.codigo_OS:=encabezadoval.ChildNodes['codigo_os'].Text;
-                ticket.nombre_os:=encabezadoval.ChildNodes['nombre_plan'].Text;
-                ticket.codigo_co1:=encabezadoval.ChildNodes['codigo_co1'].Text;
-                ticket.nombre_co1:=encabezadoval.ChildNodes['nombre_planco1'].Text;
-                ticket.codigo_Cos2:=encabezadoval.ChildNodes['codigo_co2'].Text;
-                ticket.nombre_cos2:=encabezadoval.ChildNodes['nombre_planco2'].Text;
-                ticket.importebruto:=strtofloat(encabezadoval.ChildNodes['importe_total'].Text);
-                ticket.importeneto:=strtofloat(encabezadoval.ChildNodes['importe_neto'].Text);
-                ticket.importecargoos:=strtofloat(encabezadoval.ChildNodes['importe_os'].Text);
-                ticket.importecargoco1:=strtofloat(encabezadoval.ChildNodes['importe_co1'].Text);
-    //            ticket.importecargoco2:=strtofloat(encabezadoval.ChildNodes['importe_co2'].Text);
-                if (encabezadoval.ChildNodes['importe_co2'].Text)<>'' then
-                begin
-                ticket.importecargoco2:=strtofloat(encabezadoval.ChildNodes['importe_co2'].Text);
-                end;
-                if (encabezadoval.ChildNodes['importe_co2'].Text)='' then
-                begin
-                 ticket.importecargoco2:=0;
-                end;
+                ticketService:= TTicketService.Create(archivoxmlval,ticket);
+                ticket:= ticketService.obtenerTicket(path+archivo);
+                ticketService.Free;
 
-                ticket.importetotaldescuento:=strtofloat(encabezadoval.ChildNodes['imp_afectado'].Text);
-                ticket.importegentileza:=strtofloat(encabezadoval.ChildNodes['imp_gentilezas'].Text);
-                ticket.coeficientetarjeta:=strtofloat(encabezadoval.ChildNodes['coeficiente_tarjeta'].Text);
-                if encabezadoval.ChildNodes['pago_efectivo'].Text='' then
-                begin
-                 ticket.efectivo:=0;
-                end;
-                if encabezadoval.ChildNodes['pago_efectivo'].Text<>'' then
-                begin
-                ticket.efectivo:=strtofloat(encabezadoval.ChildNodes['pago_efectivo'].Text);
-                end;
-                if encabezadoval.ChildNodes['pago_tarjeta'].Text='' then
-                begin
-                ticket.tarjeta:=0;
-                end;
-                if encabezadoval.ChildNodes['pago_tarjeta'].Text<>''  then
-                begin
-                ticket.tarjeta:=strtofloat(encabezadoval.ChildNodes['pago_tarjeta'].Text);
-                end;
-                if encabezadoval.ChildNodes['pago_cc'].Text='' then
-                begin
-                ticket.ctacte:=0;
-                end;
-                if encabezadoval.ChildNodes['pago_cc'].Text<>'' then
-                begin
-                ticket.ctacte:=strtofloat(encabezadoval.ChildNodes['pago_cc'].Text);
-                end;
-                if encabezadoval.ChildNodes['pago_ch'].Text='' then
-                begin
-                ticket.cheque:=0;
-                end;
-                if encabezadoval.ChildNodes['pago_ch'].Text<>'' then
-                begin
-                ticket.cheque:=strtofloat(encabezadoval.ChildNodes['pago_ch'].Text);
-                end;
-
-
-                ticket.afiliado_numero:=encabezadoval.ChildNodes['afiliado_os'].Text;
-                ticket.afiliado_apellido:=encabezadoval.ChildNodes['afiliado_apellido'].Text;
-                ticket.afiliado_nombre:=encabezadoval.ChildNodes['afiliado_nombre'].Text;
-                ticket.numero_receta:=encabezadoval.ChildNodes['receta'].Text;
-                ticket.medico_nro_matricula:=encabezadoval.ChildNodes['matricula_medico'].Text;
-                ticket.medico_codigo_provincia:=encabezadoval.ChildNodes['codigo_provincia'].Text;
-                ticket.medico_tipo_matricula:=encabezadoval.ChildNodes['tipo_matricula'].Text;
-                ticket.afiliado_numeroco1:=encabezadoval.ChildNodes['afiliado_co1'].Text;
-                ticket.medico_nro_matriculaco1:=encabezadoval.ChildNodes['matricula_medicoco1'].Text;
-                ticket.valnroreferencia:=encabezadoval.ChildNodes['codigo_Validacion'].Text;
-                ticket.nro_caja:=encabezadoval.ChildNodes['Nro_caja'].Text;
-                ticket.fechacaja:=strtodate(encabezadoval.ChildNodes['fecha_operativa'].Text);
-                ticket.fec_operativa:=strtodate(encabezadoval.ChildNodes['fecha_operativa'].Text);
-                ticket.codigo_tratamiento:= encabezadoval.ChildNodes['tratamiento'].Text;
-                ticket.info_adicional:= encabezadoval.ChildNodes['datos_adicionales'].Text;
-                TICKET.codigoos_prestador:=encabezadoval.ChildNodes['codigo_prestador'].Text;
-                TICKET.codigo_validador:=encabezadoval.ChildNodes['codigo_validador'].Text;
-                ticket.cuitsucursal:=encabezadoval.ChildNodes['cuit_sucursal'].Text;
-                ticket.codigoos_validador:=encabezadoval.ChildNodes['codigoos_validador'].Text;
-                ticket.puntos_farmavalor:=encabezadoval.ChildNodes['punto_farmavalor'].Text;
 
                 mticket.Lines.Add(datetostr(TICKET.fechafiscal)+'-----------------------------'+'Nro COMPROB: '+TICKET.comprobante+' '+TICKET.nrocomprobantenf);
                 mticket.Lines.Add('VENDEDOR: '+TICKET.cod_vendedor);
@@ -577,53 +547,13 @@ for I := 0 to flist.Items.Count -1 do
                 mticket.Lines.Add('Pago a cargo co1: '+floattostr(ticket.importecargoco1));
                 mticket.Lines.Add('Codigo de validacion: '+ticket.valnroreferencia);
 
-                detalleval:=archivoxmlval.DocumentElement.ChildNodes[1];
                 if cdsdetalle.Active=false then
                     begin
                       cdsdetalle.CreateDataSet;
                       cdsdetalle.Active:=true;
                     end;
-                    for v := 0 to DETALLEVAL.ChildNodes.Count -1 do
-                        BEGIN
-                          ITEMVAL:=DETALLEVAL.ChildNodes[v];
-                          cdsdetalle.Append;
-                          //cdsdetallenroitem.AsString:=itemval.ChildNodes['NroItem'].Text;
-                          cdsdetallenro_troquel.Asstring:=itemval.ChildNodes['nro_troquel'].Text;
-                          cdsdetallenom_largo.Asstring:=itemval.ChildNodes['nom_largo'].Text;
-                          cdsdetalleprecio.Asstring:=itemval.ChildNodes['precio'].Text;
-                          cdsdetallecantidad.Asstring:=itemval.ChildNodes['cantidad'].Text;
-                          cdsdetalledescuentos.Asstring:=itemval.ChildNodes['descuentos'].Text;
-                          cdsdetalleprecio_totaldesc.Asstring:=itemval.ChildNodes['precio_totaldesc'].Text;
-                          cdsdetalleprecio_total.Asstring:=itemval.ChildNodes['precio_total'].Text;
-                          cdsdetalleporcentaje.Asstring:=itemval.ChildNodes['porcentaje'].Text;
-                          cdsdetallecod_alfabeta.Asstring:=itemval.ChildNodes['cod_alfabeta'].Text;
-                          cdsdetallecod_barraspri.Asstring:=itemval.ChildNodes['cod_barraspri'].Text;
-                          cdsdetallecod_iva.Asstring:=itemval.ChildNodes['cod_iva'].Text;
-                          cdsdetalleporcentajeos.Asstring:=itemval.ChildNodes['porcentajeos'].Text;
-                          cdsdetalleporcentajeco1.Asstring:=itemval.ChildNodes['porcentajeco1'].Text;
-                          cdsdetalleporcentajeco2.Asstring:=itemval.ChildNodes['porcentajeco2'].Text;
-                          cdsdetalledescuentosos.Asstring:=itemval.ChildNodes['descuentosos'].Text;
-                          cdsdetallecod_laboratorio.Asstring:=itemval.ChildNodes['cod_laboratorio'].Text;
-                          cdsdetallecan_stk.Asstring:=itemval.ChildNodes['can_stk'].Text;
-                          cdsdetallevale.Asstring:=itemval.ChildNodes['vale'].Text;
-                          cdsdetallecan_vale.Asstring:=itemval.ChildNodes['can_vale'].Text;
-                          cdsdetalletamano.Asstring:=itemval.ChildNodes['tamano'].Text;
-                          cdsdetalledescuentoco1.Asstring:=itemval.ChildNodes['descuentoco1'].Text;
-                          cdsdetallemodificado.Asstring:=itemval.ChildNodes['modificado'].Text;
-                          cdsdetallegentileza.Asstring:=itemval.ChildNodes['gentileza'].Text;
-                          cdsdetallerubro.Asstring:=itemval.ChildNodes['rubro'].Text;
-                          cdsdetalleimportegent.Asstring:=itemval.ChildNodes['importegent'].Text;
-                          cdsdetallecodautorizacion.Asstring:=itemval.ChildNodes['cod_autorizacion'].Text;
-                          cdsdetalleitem.Asstring:=itemval.ChildNodes['NroItem'].Text;
-                          cdsdetalledescuentoco2.Asstring:=itemval.ChildNodes['descuentoco2'].Text;
-                          if cdsdetallecan_vale.asstring<>'0' then
-                          begin
-                          TICKET.valecantidad:=cdsdetallecan_vale.AsString;
-                          ticket.llevavale:='SI';
-                          end;
+               cargarGridDetalleTicket;
 
-                        end;
-               ticket.itemstotales:=DETALLEVAL.ChildNodes.Count;
 
  gfacturador.DataSource.DataSet.First;
 
@@ -767,6 +697,7 @@ for I := 0 to flist.Items.Count -1 do
       try
         if not TUtils.contienePalabra('_reimpresion',archivo)  then
         begin
+
           Insertarcomprobante;
         end;
 
@@ -784,6 +715,7 @@ for I := 0 to flist.Items.Count -1 do
             CopyFile(pchar(path+archivo), pchar(ticket.errores+ticket.nroticketadicional+'.xml'), false);
         end;
          deletefile(path+archivo);
+         flist.Update;
          //blimpiartodo.Click;
          dmFacturador.CerrarConexion();
 
@@ -2423,8 +2355,6 @@ iva: double;
  conteo:integer;
 
 begin
-
-
   ticket.nroticketadicional:=ticket.fiscla_pv+(rightpad(inttostr(nro_comprob), '0', 8));
 
 
@@ -3869,7 +3799,10 @@ end;
 
 procedure Tfimpresor.limpiarunidadticket;
 begin
-
+    if ticket.detalleFac<> nil then
+    begin
+      ticket.detalleFac.Clear;
+    end;
     if ticket.items<>nil then
       begin
     ticket.items.Clear;

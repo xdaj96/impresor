@@ -19,13 +19,21 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   uPagoChequeDAO in 'DAO\uPagoChequeDAO.pas',
-  uPagoCheque in 'Models\uPagoCheque.pas',
   uPagoChequeService in 'Services\uPagoChequeService.pas',
   uTicketAEpson in 'Models\uTicketAEpson.pas',
   ufBuscarTK in 'Vistas\ufBuscarTK.pas',
   uPagoCtaCteDAO in 'DAO\uPagoCtaCteDAO.pas',
   uFPagoCte in 'Models\uFPagoCte.pas',
-  uPagoCtaCteService in 'Services\uPagoCtaCteService.pas';
+  uPagoCtaCteService in 'Services\uPagoCtaCteService.pas',
+  uFormaPagoService in 'Services\uFormaPagoService.pas',
+  uBaseFormaPago in 'Models\uBaseFormaPago.pas',
+  uPagoCheque in 'Models\uPagoCheque.pas',
+  uPagoEfectivo in 'Models\uPagoEfectivo.pas',
+  uPagoTarjeta in 'Models\uPagoTarjeta.pas',
+  uPagoEfectivoService in 'Services\uPagoEfectivoService.pas',
+  uPagoTarjetaService in 'Services\uPagoTarjetaService.pas',
+  uPagoEfectivoDAO in 'DAO\uPagoEfectivoDAO.pas',
+  uPagoTarjetaDAO in 'DAO\uPagoTarjetaDAO.pas';
 
 {$R *.res}
 

@@ -1,0 +1,35 @@
+unit uPagoCheque;
+
+interface
+  uses uBaseFormaPago;
+  type TPagoCheque = class(TBaseFormaPago)
+    private
+
+    Fcod_banco:string;
+    Fnro_cheque:string;
+    Fimporte:double;
+
+    public
+      property cod_banco      :string read Fcod_banco       write Fcod_banco;
+      property nro_cheque     :string read Fnro_cheque      write Fnro_cheque;
+      property importe        :double read Fimporte         write Fimporte;
+      property NroSucursal    :string read FNroSucursal     write FNroSucursal;
+      property TipComprobante :string read FTipComprobante  write FTipComprobante;
+      property NroComprob     :string read FNroComprob      write FNroComprob;
+      constructor Create;
+
+  end;
+implementation
+
+  constructor TPagoCheque.Create;
+  begin
+    NroSucursal:='';
+    TipComprobante:='';
+    NroComprob:='';
+    Fcod_banco:='';
+    Fnro_cheque:='';
+    Fimporte:=0;
+  end;
+
+
+end.

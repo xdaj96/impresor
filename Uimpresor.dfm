@@ -741,16 +741,13 @@ object fimpresor: Tfimpresor
           E8DBEFE8DBEFE8DBEFE8DBE8DFD0FFFFFFFFFFFFFFFFFFFFFFFF}
         ParentFont = False
         TabOrder = 10
+        Visible = False
         OnClick = btnReimprimirClick
       end
     end
     object Configuracion: TTabSheet
       Caption = 'Configuracion'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object Bguardar: TBitBtn
         Left = 35
         Top = 415
@@ -992,7 +989,6 @@ object fimpresor: Tfimpresor
     end
   end
   object contador: TTimer
-    Interval = 2000
     OnTimer = contadorTimer
     Left = 419
     Top = 128
